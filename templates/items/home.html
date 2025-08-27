@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Lost & Found - Reuniting People with Their Belongings{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center mb-3" style="padding: 3rem 0; background-color: var(--white); border-radius: 8px; margin-bottom: 2rem;">
+    <h1 style="color: var(--primary-blue); font-size: 3rem; margin-bottom: 1rem;">Lost & Found</h1>
+    <p style="font-size: 1.2rem; color: var(--text-black); margin-bottom: 2rem;">
+        Helping people reunite with their belongings through community collaboration
+    </p>
+    
+    <div class="d-flex justify-center gap-2">
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_item' %}" class="btn btn-primary">Post a Lost/Found Item</a>
+            <a href="{% url 'item_list' %}" class="btn btn-secondary">Browse Items</a>
+        {% else %}
+            <a href="{% url 'register_user' %}" class="btn btn-primary">Join Our Community</a>
+            <a href="{% url 'item_list' %}" class="btn btn-secondary">Browse Items</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="grid grid-3 mb-3">
+    <div class="card text-center">
+        <h3 style="color: var(--error-red);">Lost Items</h3>
+        <p>Help find missing belongings</p>
+        <a href="{% url 'item_list' %}?status=lost" class="btn btn-secondary">View Lost Items</a>
+    </div>
+    
+    <div class="card text-center">
+        <h3 style="color: var(--success-green);">Found Items</h3>
+        <p>Items waiting to be claimed</p>
+        <a href="{% url 'item_list' %}?status=found" class="btn btn-secondary">View Found Items</a>
+    </div>
+    
+    <div class="card text-center">
+        <h3 style="color: var(--secondary-orange);">Get Started</h3>
+        <p>Join our community today</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_item' %}" class="btn btn-primary">Post Item</a>
+        {% else %}
+            <a href="{% url 'register_user' %}" class="btn btn-primary">Register Now</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Items -->
+{% if recent_items %}
+<div class="card">
+    <div class="card-header">
+        <h2 style="color: var(--primary-blue);">Recent Items</h2>
+        <p>Latest lost and found items from our community</p>
+    </div>
+    
+    <div class="grid grid-3">
+        {% for item in recent_items %}
+        <div class="card">
+            {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-image">
+            {% else %}
+                <div class="card-image" style="background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; color: var(--text-black);">
+                    <span style="font-size: 3rem;">📦</span>
+                </div>
+            {% endif %}
+            
+            <div class="card-header">
+                <h4 class="card-title">{{ item.title }}</h4>
+                <div class="card-meta">
+                    <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                    <span>{{ item.get_category_display }}</span>
+                    <span>{{ item.created_at|timesince }} ago</span>
+                </div>
+            </div>
+            
+            <p>{{ item.description|truncatewords:15 }}</p>
+            
+            {% if item.location_lost_found %}
+                <p><strong>Location:</strong> {{ item.location_lost_found }}</p>
+            {% endif %}
+            
+            <a href="{% url 'item_detail' item.pk %}" class="btn btn-primary">View Details</a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center mt-3">
+        <a href="{% url 'item_list' %}" class="btn btn-secondary">View All Items</a>
+    </div>
+</div>
+{% else %}
+<div class="card text-center">
+    <h3>No items posted yet</h3>
+    <p>Be the first to post a lost or found item!</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'create_item' %}" class="btn btn-primary">Post First Item</a>
+    {% else %}
+        <a href="{% url 'register_user' %}" class="btn btn-primary">Register to Post</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- How It Works -->
+<div class="card mt-3">
+    <div class="card-header text-center">
+        <h2 style="color: var(--primary-blue);">How It Works</h2>
+    </div>
+    
+    <div class="grid grid-3">
+        <div class="text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
+            <h4>1. Post an Item</h4>
+            <p>Lost something? Found something? Create a detailed post with photos and description.</p>
+        </div>
+        
+        <div class="text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+            <h4>2. Browse & Search</h4>
+            <p>Search through our database of lost and found items using filters and keywords.</p>
+        </div>
+        
+        <div class="text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🤝</div>
+            <h4>3. Connect & Reunite</h4>
+            <p>Connect with other users to verify ownership and arrange item return.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

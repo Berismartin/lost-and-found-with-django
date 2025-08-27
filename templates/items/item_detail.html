@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.title }} - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="grid grid-2">
+        <!-- Item Image -->
+        <div>
+            {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
+            {% else %}
+                <div style="width: 100%; height: 300px; background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-black);">
+                    <span style="font-size: 5rem;">📦</span>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Item Details -->
+        <div>
+            <div class="card-header">
+                <h1 class="card-title">{{ item.title }}</h1>
+                <div class="card-meta">
+                    <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                    <span class="badge" style="background-color: var(--primary-blue);">{{ item.get_category_display }}</span>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h4>Description</h4>
+                <p>{{ item.description|linebreaks }}</p>
+            </div>
+            
+            {% if item.location_lost_found %}
+                <div class="mb-2">
+                    <strong>📍 Location:</strong> {{ item.location_lost_found }}
+                </div>
+            {% endif %}
+            
+            {% if item.date_lost_found %}
+                <div class="mb-2">
+                    <strong>📅 Date & Time:</strong> {{ item.date_lost_found|date:"F d, Y g:i A" }}
+                </div>
+            {% endif %}
+            
+            <div class="mb-2">
+                <strong>📝 Posted:</strong> {{ item.created_at|date:"F d, Y g:i A" }}
+            </div>
+            
+            <div class="mb-3">
+                <strong>👤 Posted by:</strong> {{ item.user.first_name }} {{ item.user.last_name }}
+            </div>
+            
+            {% if item.contact_info %}
+                <div class="mb-3">
+                    <h4>Contact Information</h4>
+                    <p>{{ item.contact_info|linebreaks }}</p>
+                </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+                {% if is_owner %}
+                    <a href="{% url 'edit_item' item.pk %}" class="btn btn-secondary">Edit Item</a>
+                    {% if item.status != 'claimed' %}
+                        <a href="{% url 'mark_claimed' item.pk %}" class="btn btn-success">Mark as Claimed</a>
+                    {% endif %}
+                    <a href="{% url 'delete_item' item.pk %}" class="btn btn-danger">Delete Item</a>
+                {% else %}
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-info">
+                            <p><strong>Contact the poster:</strong> {{ item.user.email }}</p>
+                            {% if item.contact_info %}
+                                <p>{{ item.contact_info }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p><a href="{% url 'login_user' %}">Login</a> to view contact information</p>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="text-center mt-3">
+    <a href="{% url 'item_list' %}" class="btn btn-secondary">← Back to All Items</a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'my_items' %}" class="btn btn-secondary">My Items</a>
+    {% endif %}
+</div>
+{% endblock %}

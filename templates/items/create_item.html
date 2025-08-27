@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Post Item - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="text-center mb-3">Post a Lost or Found Item</h2>
+    <p class="text-center mb-3">Provide detailed information to help reunite items with their owners</p>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Item Title *</label>
+            {{ form.title }}
+            {% if form.title.help_text %}
+                <small class="form-text text-muted">{{ form.title.help_text }}</small>
+            {% endif %}
+            {% if form.title.errors %}
+                <div class="text-danger">{{ form.title.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description *</label>
+            {{ form.description }}
+            {% if form.description.help_text %}
+                <small class="form-text text-muted">{{ form.description.help_text }}</small>
+            {% endif %}
+            {% if form.description.errors %}
+                <div class="text-danger">{{ form.description.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category *</label>
+                {{ form.category }}
+                {% if form.category.help_text %}
+                    <small class="form-text text-muted">{{ form.category.help_text }}</small>
+                {% endif %}
+                {% if form.category.errors %}
+                    <div class="text-danger">{{ form.category.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.status.id_for_label }}">Status *</label>
+                {{ form.status }}
+                {% if form.status.help_text %}
+                    <small class="form-text text-muted">{{ form.status.help_text }}</small>
+                {% endif %}
+                {% if form.status.errors %}
+                    <div class="text-danger">{{ form.status.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.image.id_for_label }}">Item Photo</label>
+            {{ form.image }}
+            {% if form.image.help_text %}
+                <small class="form-text text-muted">{{ form.image.help_text }}</small>
+            {% endif %}
+            {% if form.image.errors %}
+                <div class="text-danger">{{ form.image.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label for="{{ form.location_lost_found.id_for_label }}">Location</label>
+                {{ form.location_lost_found }}
+                {% if form.location_lost_found.help_text %}
+                    <small class="form-text text-muted">{{ form.location_lost_found.help_text }}</small>
+                {% endif %}
+                {% if form.location_lost_found.errors %}
+                    <div class="text-danger">{{ form.location_lost_found.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.date_lost_found.id_for_label }}">Date & Time</label>
+                {{ form.date_lost_found }}
+                {% if form.date_lost_found.help_text %}
+                    <small class="form-text text-muted">{{ form.date_lost_found.help_text }}</small>
+                {% endif %}
+                {% if form.date_lost_found.errors %}
+                    <div class="text-danger">{{ form.date_lost_found.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.contact_info.id_for_label }}">Additional Contact Information</label>
+            {{ form.contact_info }}
+            {% if form.contact_info.help_text %}
+                <small class="form-text text-muted">{{ form.contact_info.help_text }}</small>
+            {% endif %}
+            {% if form.contact_info.errors %}
+                <div class="text-danger">{{ form.contact_info.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary">Post Item</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
