@@ -28,7 +28,33 @@ create_item.html: The form for submitting a new lost or found item.
 item_detail.html: The page that displays a single item's information, including the image and description.
 
 
-follow these palletes
+---
+
+### Sirajje: System Logic & Admin — Implemented Tasks
+
+**1. Points & Status System**
+- Expanded status choices for `Item` (`lost`, `found`, `claimed`, `returned_to_owner`, `archived`).
+- Implemented dual confirmation (owner/finder) and logic for changing an item’s status, with a special flow for “Returned to Owner.”
+- Awarded points to users for successful item returns; created the `UserPoints` model for tracking.
+- Integrated status/points logic into both backend (views) and frontend (template forms and clear UI feedback).
+- Styled status badges by status: `lost` (red), `found` (green), `claimed` (blue), `returned_to_owner` (blue/orange), `archived` (red), matching the project palette.
+
+**2. Reporting & Admin Tools**
+- Created a `Report` model for reporting fraudulent/inappropriate items.
+- Added a user-facing reporting form and frontend “Report” button to the item detail page.
+- Registered `Report`, `Item`, `ItemImage`, and `UserPoints` with custom logic and filtering in Django admin.
+- Provided an admin action to mark reports as resolved from the admin panel.
+
+**3. UI/UX Integration**
+- Added and styled “Change Status” and “Report” buttons, as well as all related forms, according to the design palette.
+- Ensured all major actions (status change, claim, report) are accessible from item_detail.html and that users see all major states visually.
+
+**4. Project Consistency**
+- Ensured all logic is fully integrated with existing CRUD, list, and detail flows for items.
+- All routes, templates, models, and admin logic conform to Django best practices for robust, maintainable production code.
+
+---
+
 Color Palette
 The color palette is professional, clean, and trustworthy. The primary colors are used for main elements like buttons and headers, while the secondary colors are for accents and backgrounds.
 Primary Blue: #0A2342 (Dark and professional, for headers, buttons, and important text)
@@ -44,5 +70,4 @@ Forms:
 All input fields should have a light gray border (#D9D9D9) and a consistent height and padding.
 Use a clear label above each input field
 Icons Lucid react icons
-
 
