@@ -40,9 +40,23 @@
             <div class="card-header">
                 <h1 class="card-title">{{ item.title }}</h1>
                 <div class="card-meta">
-                    <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
-                    <span class="badge" style="background-color: var(--primary-blue);">{{ item.get_category_display }}</span>
+                    {% if item.status == 'lost' %}
+                        <span class="badge" style="background: #E53935; color: #fff;">{{ item.get_status_display }}</span>
+
+                    {% elif item.status == 'found' %}
+                        <span class="badge" style="background: #4CAF50; color: #fff;">{{ item.get_status_display }}</span>
+                    {% elif item.status == 'claimed' %}
+                        <span class="badge" style="background: #0A2342; color: #fff;">{{ item.get_status_display }}</span>
+                    {% elif item.status == 'returned_to_owner' %}
+                        <span class="badge" style="background: #0A2342; color: #FF9F1C; border: 2px solid #FF9F1C;">{{ item.get_status_display }}</span>
+                    {% elif item.status == 'archived' %}
+                        <span class="badge" style="background: #E53935; color: #fff;">{{ item.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge" style="background: #D9D9D9; color: #171717;">{{ item.get_status_display }}</span>
+                    {% endif %}
+                    <span class="badge" style="background-color: #0A2342; color: #fff;">{{ item.get_category_display }}</span>
                 </div>
+
             </div>
             
             <div class="mb-3">
@@ -78,31 +92,37 @@
             {% endif %}
             
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 mb-2">
                 {% if is_owner %}
-                    <a href="{% url 'edit_item' item.pk %}" class="btn btn-secondary">Edit Item</a>
+                    <a href="{% url 'edit_item' item.pk %}" class="btn" style="background: #fff; color: #0A2342; border: 2px solid #0A2342;">Edit Item</a>
                     {% if item.status != 'claimed' %}
-                        <a href="{% url 'mark_claimed' item.pk %}" class="btn btn-success">Mark as Claimed</a>
+                        <a href="{% url 'mark_claimed' item.pk %}" class="btn" style="background: #4CAF50; color: #fff;">Mark as Claimed</a>
                     {% endif %}
-                    <a href="{% url 'delete_item' item.pk %}" class="btn btn-danger">Delete Item</a>
-                {% else %}
-                    {% if user.is_authenticated %}
-                        <div class="alert alert-info">
-                            <p><strong>Contact the poster:</strong> {{ item.user.email }}</p>
-                            {% if item.contact_info %}
-                                <p>{{ item.contact_info }}</p>
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning">
-                            <p><a href="{% url 'login_user' %}">Login</a> to view contact information</p>
-                        </div>
-                    {% endif %}
+                    <a href="{% url 'delete_item' item.pk %}" class="btn" style="background: #E53935; color: #fff;">Delete Item</a>
+                    <a href="{% url 'change_item_status' item.pk %}" class="btn" style="background: #0A2342; color: #fff;">Change Status</a>
                 {% endif %}
+                <a href="{% url 'report_item' item.pk %}" class="btn" style="background: #FF9F1C; color: #171717;">Report</a>
             </div>
+
+
+            {% if not is_owner %}
+                {% if user.is_authenticated %}
+                    <div class="alert alert-info">
+                        <p><strong>Contact the poster:</strong> {{ item.user.email }}</p>
+                        {% if item.contact_info %}
+                            <p>{{ item.contact_info }}</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <p><a href="{% url 'login_user' %}">Login</a> to view contact information</p>
+                    </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>
+
 
 <!-- Navigation -->
 <div class="text-center mt-3">

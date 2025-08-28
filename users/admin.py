@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserProfile
+from .models import User, UserProfile, UserPoints
 
 
 @admin.register(User)
@@ -32,3 +32,11 @@ class UserProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(UserPoints)
+class UserPointsAdmin(admin.ModelAdmin):
+    """User Points Admin"""
+    list_display = ('user', 'points', 'updated_at')
+    search_fields = ('user__username',)
+    readonly_fields = ('updated_at',)

@@ -24,7 +24,8 @@ class Item(models.Model):
     STATUS_CHOICES = [
         ('lost', 'Lost'),
         ('found', 'Found'),
-        ('claimed', 'Claimed'),
+        ('returned_to_owner', 'Returned to Owner'),
+        ('archived', 'Archived'),
     ]
 
     title = models.CharField(max_length=200)
@@ -147,3 +148,20 @@ class ItemImage(models.Model):
             if os.path.isfile(self.image.path):
                 os.remove(self.image.path)
         super().delete(*args, **kwargs)
+
+
+class Report(models.Model):
+    """
+    Model for reporting inappropriate or fraudulent items
+    """
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='reports')
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports_made')
+    reason = models.TextField(help_text="Describe the issue or reason for reporting this item.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Report for {self.item.title} by {self.reporter.username}"
