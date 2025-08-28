@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Report Item: {{ item.title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="reason">Reason for Reporting:</label>
+      <textarea id="reason" name="reason" class="form-control" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-danger mt-2">Submit Report</button>
+    <a href="{% url 'item_detail' item.pk %}" class="btn btn-secondary mt-2">Cancel</a>
+  </form>
+</div>
+{% endblock %}
