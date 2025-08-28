@@ -155,6 +155,10 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Storage for new selected files
+    let selectedFiles = [];
+    let fileIdCounter = 0;
+    
     // Main image preview
     const mainImageInput = document.getElementById('id_image');
     const mainPreview = document.getElementById('main-image-preview');
@@ -176,50 +180,152 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Additional images preview
+    // Additional images preview with persistent gallery
     const additionalImagesInput = document.getElementById('additional-images');
     const previewContainer = document.getElementById('preview-container');
     
-    if (additionalImagesInput) {
-        additionalImagesInput.addEventListener('change', function(e) {
-            // Clear existing previews
-            previewContainer.innerHTML = '';
-            
-            const files = Array.from(e.target.files);
-            files.forEach((file, index) => {
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imgContainer = document.createElement('div');
-                        imgContainer.className = 'position-relative';
-                        imgContainer.style.cssText = 'display: inline-block; margin: 5px;';
-                        
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.alt = `Preview ${index + 1}`;
-                        img.style.cssText = 'width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 2px solid var(--success-green);';
-                        
-                        const label = document.createElement('small');
-                        label.className = 'd-block text-center mt-1';
-                        label.textContent = 'New Image';
-                        label.style.color = 'var(--success-green)';
-                        
-                        imgContainer.appendChild(img);
-                        imgContainer.appendChild(label);
-                        previewContainer.appendChild(imgContainer);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Show file count
-            if (files.length > 0) {
-                const countDiv = document.createElement('div');
-                countDiv.className = 'mt-2';
-                countDiv.innerHTML = `<small class="text-muted">${files.length} new image(s) selected</small>`;
-                previewContainer.appendChild(countDiv);
+    function updateFileInput() {
+        // Create a new DataTransfer object to update the file input
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(fileObj => {
+            if (fileObj.file) {
+                dataTransfer.items.add(fileObj.file);
             }
         });
+        additionalImagesInput.files = dataTransfer.files;
+    }
+    
+    function renderNewImagePreviews() {
+        // Clear existing previews
+        previewContainer.innerHTML = '';
+        
+        selectedFiles.forEach((fileObj, index) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'position-relative';
+            imgContainer.style.cssText = 'display: inline-block; margin: 5px;';
+            imgContainer.dataset.fileId = fileObj.id;
+            
+            const img = document.createElement('img');
+            img.src = fileObj.dataUrl;
+            img.alt = `New Preview ${index + 1}`;
+            img.style.cssText = 'width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 2px solid var(--success-green);';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.className = 'btn btn-danger btn-sm';
+            removeBtn.style.cssText = 'position: absolute; top: -5px; right: -5px; width: 25px; height: 25px; border-radius: 50%; padding: 0; font-size: 16px; line-height: 1;';
+            removeBtn.title = 'Remove this new image';
+            
+            removeBtn.addEventListener('click', function() {
+                // Remove from selectedFiles array
+                selectedFiles = selectedFiles.filter(f => f.id !== fileObj.id);
+                // Update file input
+                updateFileInput();
+                // Re-render previews
+                renderNewImagePreviews();
+            });
+            
+            const fileName = document.createElement('small');
+            fileName.className = 'd-block text-center mt-1';
+            fileName.textContent = fileObj.file.name.length > 15 ? 
+                fileObj.file.name.substring(0, 12) + '...' : fileObj.file.name;
+            fileName.style.color = 'var(--success-green)';
+            
+            const newLabel = document.createElement('small');
+            newLabel.className = 'd-block text-center';
+            newLabel.textContent = 'New Image';
+            newLabel.style.cssText = 'color: var(--success-green); font-weight: bold;';
+            
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(removeBtn);
+            imgContainer.appendChild(fileName);
+            imgContainer.appendChild(newLabel);
+            previewContainer.appendChild(imgContainer);
+        });
+        
+        // Show file count
+        if (selectedFiles.length > 0) {
+            const countDiv = document.createElement('div');
+            countDiv.className = 'mt-2';
+            countDiv.innerHTML = `<small class="text-muted">${selectedFiles.length} new image(s) selected</small>`;
+            previewContainer.appendChild(countDiv);
+        }
+        
+        // Add "Add More" button
+        const addMoreBtn = document.createElement('div');
+        addMoreBtn.className = 'position-relative';
+        addMoreBtn.style.cssText = 'display: inline-block; margin: 5px; cursor: pointer;';
+        
+        const addMoreBox = document.createElement('div');
+        addMoreBox.style.cssText = 'width: 120px; height: 120px; border: 2px dashed var(--primary-blue); border-radius: 4px; display: flex; align-items: center; justify-content: center; background-color: rgba(10, 35, 66, 0.05);';
+        addMoreBox.innerHTML = '<span style="font-size: 2rem; color: var(--primary-blue);">+</span>';
+        
+        const addMoreLabel = document.createElement('small');
+        addMoreLabel.className = 'd-block text-center mt-1';
+        addMoreLabel.textContent = selectedFiles.length > 0 ? 'Add More' : 'Add Images';
+        addMoreLabel.style.color = 'var(--primary-blue)';
+        
+        addMoreBtn.appendChild(addMoreBox);
+        addMoreBtn.appendChild(addMoreLabel);
+        
+        addMoreBtn.addEventListener('click', function() {
+            additionalImagesInput.click();
+        });
+        
+        previewContainer.appendChild(addMoreBtn);
+    }
+    
+    if (additionalImagesInput) {
+        // Initial render of add more button
+        renderNewImagePreviews();
+        
+        additionalImagesInput.addEventListener('change', function(e) {
+            const newFiles = Array.from(e.target.files);
+            
+            // Process new files
+            const promises = newFiles.map(file => {
+                return new Promise((resolve) => {
+                    if (file && file.type.startsWith('image/')) {
+                        // Check if file already exists (by name and size)
+                        const exists = selectedFiles.some(f => 
+                            f.file.name === file.name && f.file.size === file.size
+                        );
+                        
+                        if (!exists) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                selectedFiles.push({
+                                    id: ++fileIdCounter,
+                                    file: file,
+                                    dataUrl: e.target.result
+                                });
+                                resolve();
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            resolve();
+                        }
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+            
+            // Wait for all files to be processed, then render
+            Promise.all(promises).then(() => {
+                updateFileInput();
+                renderNewImagePreviews();
+            });
+        });
+    }
+    
+    // Add some helpful text
+    if (previewContainer) {
+        const helpText = document.createElement('div');
+        helpText.className = 'mt-2';
+        helpText.innerHTML = '<small class="text-muted">💡 Tip: You can add multiple new images. They will be added to your existing gallery when you save.</small>';
+        previewContainer.parentNode.appendChild(helpText);
     }
 });
 </script>
