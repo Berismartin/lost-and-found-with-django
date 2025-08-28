@@ -57,7 +57,7 @@
         </div>
         
         <div class="form-group">
-            <label for="{{ form.image.id_for_label }}">Item Photo</label>
+            <label for="{{ form.image.id_for_label }}">Main Item Photo</label>
             {{ form.image }}
             {% if form.image.help_text %}
                 <small class="form-text text-muted">{{ form.image.help_text }}</small>
@@ -65,6 +65,27 @@
             {% if form.image.errors %}
                 <div class="text-danger">{{ form.image.errors.0 }}</div>
             {% endif %}
+            
+            <!-- Main image preview -->
+            <div id="main-image-preview" class="mt-2" style="display: none;">
+                <img id="main-preview-img" src="" alt="Main image preview" style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 4px;">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.additional_images.id_for_label }}">Additional Photos</label>
+            {{ form.additional_images }}
+            {% if form.additional_images.help_text %}
+                <small class="form-text text-muted">{{ form.additional_images.help_text }}</small>
+            {% endif %}
+            {% if form.additional_images.errors %}
+                <div class="text-danger">{{ form.additional_images.errors.0 }}</div>
+            {% endif %}
+            
+            <!-- Additional images preview -->
+            <div id="additional-images-preview" class="mt-2">
+                <div id="preview-container" class="d-flex gap-2" style="flex-wrap: wrap;"></div>
+            </div>
         </div>
         
         <div class="grid grid-2">
@@ -108,4 +129,88 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Main image preview
+    const mainImageInput = document.getElementById('id_image');
+    const mainPreview = document.getElementById('main-image-preview');
+    const mainPreviewImg = document.getElementById('main-preview-img');
+    
+    if (mainImageInput) {
+        mainImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mainPreviewImg.src = e.target.result;
+                    mainPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                mainPreview.style.display = 'none';
+            }
+        });
+    }
+    
+    // Additional images preview
+    const additionalImagesInput = document.getElementById('additional-images');
+    const previewContainer = document.getElementById('preview-container');
+    
+    if (additionalImagesInput) {
+        additionalImagesInput.addEventListener('change', function(e) {
+            // Clear existing previews
+            previewContainer.innerHTML = '';
+            
+            const files = Array.from(e.target.files);
+            files.forEach((file, index) => {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'position-relative';
+                        imgContainer.style.cssText = 'display: inline-block; margin: 5px;';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = `Preview ${index + 1}`;
+                        img.style.cssText = 'width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 2px solid var(--neutral-gray);';
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.className = 'btn btn-danger btn-sm';
+                        removeBtn.style.cssText = 'position: absolute; top: -5px; right: -5px; width: 25px; height: 25px; border-radius: 50%; padding: 0; font-size: 16px; line-height: 1;';
+                        removeBtn.title = 'Remove this image';
+                        
+                        removeBtn.addEventListener('click', function() {
+                            // Remove this preview
+                            imgContainer.remove();
+                            
+                            // Update the file input (this is complex with multiple files)
+                            // For now, we'll just hide the preview - the actual file removal 
+                            // would require more complex handling
+                        });
+                        
+                        imgContainer.appendChild(img);
+                        imgContainer.appendChild(removeBtn);
+                        previewContainer.appendChild(imgContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Show file count
+            if (files.length > 0) {
+                const countDiv = document.createElement('div');
+                countDiv.className = 'mt-2';
+                countDiv.innerHTML = `<small class="text-muted">${files.length} image(s) selected</small>`;
+                previewContainer.appendChild(countDiv);
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

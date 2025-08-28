@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
-from .models import Item
+from django.db.models import Q, Max
+from django.db import models
+from .models import Item, ItemImage
 from .forms import ItemForm
 
 
@@ -66,7 +67,22 @@ def create_item(request):
             item = form.save(commit=False)
             item.user = request.user
             item.save()
-            messages.success(request, f'Your {item.get_status_display().lower()} item "{item.title}" has been posted successfully!')
+            
+            # Handle multiple additional images
+            additional_images = request.FILES.getlist('additional_images')
+            for i, image_file in enumerate(additional_images):
+                if image_file:
+                    ItemImage.objects.create(
+                        item=item,
+                        image=image_file,
+                        order=i + 1
+                    )
+            
+            image_count = len(additional_images)
+            if image_count > 0:
+                messages.success(request, f'Your {item.get_status_display().lower()} item "{item.title}" has been posted successfully with {image_count + (1 if item.image else 0)} images!')
+            else:
+                messages.success(request, f'Your {item.get_status_display().lower()} item "{item.title}" has been posted successfully!')
             return redirect('item_detail', pk=item.pk)
     else:
         form = ItemForm()
@@ -98,7 +114,26 @@ def edit_item(request, pk):
         form = ItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Your item "{item.title}" has been updated successfully!')
+            
+            # Handle additional images
+            additional_images = request.FILES.getlist('additional_images')
+            if additional_images:
+                # Get the current highest order number
+                max_order = item.item_images.aggregate(
+                    max_order=Max('order')
+                )['max_order'] or 0
+                
+                for i, image_file in enumerate(additional_images):
+                    if image_file:
+                        ItemImage.objects.create(
+                            item=item,
+                            image=image_file,
+                            order=max_order + i + 1
+                        )
+                
+                messages.success(request, f'Your item "{item.title}" has been updated successfully with {len(additional_images)} new images!')
+            else:
+                messages.success(request, f'Your item "{item.title}" has been updated successfully!')
             return redirect('item_detail', pk=item.pk)
     else:
         form = ItemForm(instance=item)

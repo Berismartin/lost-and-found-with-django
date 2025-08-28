@@ -42,8 +42,8 @@
             <div class="grid grid-2">
                 <!-- Item Image -->
                 <div>
-                    {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+                    {% if item.main_image %}
+                        <img src="{{ item.main_image.url }}" alt="{{ item.title }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
                     {% else %}
                         <div style="width: 100%; height: 150px; background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; border-radius: 4px; color: var(--text-black);">
                             <span style="font-size: 3rem;">📦</span>

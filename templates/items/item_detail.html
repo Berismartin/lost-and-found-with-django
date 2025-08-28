@@ -5,10 +5,29 @@
 {% block content %}
 <div class="card">
     <div class="grid grid-2">
-        <!-- Item Image -->
+        <!-- Item Images Gallery -->
         <div>
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
+            {% if item.main_image or item.item_images.exists %}
+                <!-- Main image display -->
+                <div class="mb-3">
+                    {% if item.main_image %}
+                        <img id="main-display-img" src="{{ item.main_image.url }}" alt="{{ item.title }}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+                    {% else %}
+                        <img id="main-display-img" src="{{ item.item_images.first.image.url }}" alt="{{ item.title }}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                
+                <!-- Thumbnail gallery -->
+                {% if item.get_all_images|length > 1 %}
+                <div class="d-flex gap-2" style="flex-wrap: wrap; max-height: 120px; overflow-y: auto;">
+                    {% for image in item.get_all_images %}
+                        <img src="{{ image.url }}" alt="Thumbnail" 
+                             class="thumbnail-img" 
+                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s ease;"
+                             onclick="changeMainImage('{{ image.url }}', this)">
+                    {% endfor %}
+                </div>
+                {% endif %}
             {% else %}
                 <div style="width: 100%; height: 300px; background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-black);">
                     <span style="font-size: 5rem;">📦</span>
@@ -92,4 +111,44 @@
         <a href="{% url 'my_items' %}" class="btn btn-secondary">My Items</a>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeMainImage(imageUrl, thumbnailElement) {
+    // Change the main image
+    const mainImg = document.getElementById('main-display-img');
+    if (mainImg) {
+        mainImg.src = imageUrl;
+    }
+    
+    // Update thumbnail borders
+    const thumbnails = document.querySelectorAll('.thumbnail-img');
+    thumbnails.forEach(thumb => {
+        thumb.style.border = '2px solid transparent';
+    });
+    
+    // Highlight selected thumbnail
+    if (thumbnailElement) {
+        thumbnailElement.style.border = '2px solid var(--primary-blue)';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set the first thumbnail as active
+    const firstThumbnail = document.querySelector('.thumbnail-img');
+    if (firstThumbnail) {
+        firstThumbnail.style.border = '2px solid var(--primary-blue)';
+    }
+    
+    // Add click handler for main image (could open in modal/lightbox)
+    const mainImg = document.getElementById('main-display-img');
+    if (mainImg) {
+        mainImg.addEventListener('click', function() {
+            // Simple implementation: open image in new tab
+            window.open(this.src, '_blank');
+        });
+    }
+});
+</script>
 {% endblock %}

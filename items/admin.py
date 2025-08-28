@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Item
+from .models import Item, ItemImage
+
+
+class ItemImageInline(admin.TabularInline):
+    """Inline admin for ItemImage"""
+    model = ItemImage
+    extra = 1
+    fields = ('image', 'caption', 'order')
 
 
 @admin.register(Item)
@@ -32,3 +39,17 @@ class ItemAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
+    
+    inlines = [ItemImageInline]
+
+
+@admin.register(ItemImage)
+class ItemImageAdmin(admin.ModelAdmin):
+    """ItemImage Admin"""
+    list_display = ('item', 'image', 'caption', 'order', 'created_at')
+    list_filter = ('created_at', 'item__category', 'item__status')
+    search_fields = ('item__title', 'caption')
+    list_editable = ('order', 'caption')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('item', 'item__user')

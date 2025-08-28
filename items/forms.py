@@ -1,5 +1,25 @@
 from django import forms
-from .models import Item
+from .models import Item, ItemImage
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    """Custom widget for multiple file uploads"""
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """Custom field for multiple file uploads"""
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        # Handle single file or multiple files
+        if isinstance(data, (list, tuple)):
+            result = [super(MultipleFileField, self).clean(d, initial) for d in data]
+        else:
+            result = super(MultipleFileField, self).clean(data, initial)
+        return result
 
 
 class ItemForm(forms.ModelForm):
@@ -12,6 +32,17 @@ class ItemForm(forms.ModelForm):
             'class': 'form-control'
         }),
         help_text="When was this item lost or found?"
+    )
+    
+    additional_images = MultipleFileField(
+        required=False,
+        widget=MultipleFileInput(attrs={
+            'class': 'form-control',
+            'multiple': True,
+            'accept': 'image/*',
+            'id': 'additional-images'
+        }),
+        help_text="Upload multiple additional images (optional)"
     )
 
     class Meta:
@@ -64,4 +95,4 @@ class ItemForm(forms.ModelForm):
         self.fields['description'].help_text = "Provide as much detail as possible to help identify the item"
         self.fields['category'].help_text = "Select the category that best describes your item"
         self.fields['status'].help_text = "Is this item lost or found?"
-        self.fields['image'].help_text = "Upload a clear photo of the item (optional but recommended)"
+        self.fields['image'].help_text = "Upload the main photo of the item (optional but recommended)"

@@ -57,8 +57,8 @@
     <div class="grid grid-3">
         {% for item in recent_items %}
         <div class="card">
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-image">
+            {% if item.main_image %}
+                <img src="{{ item.main_image.url }}" alt="{{ item.title }}" class="card-image">
             {% else %}
                 <div class="card-image" style="background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; color: var(--text-black);">
                     <span style="font-size: 3rem;">📦</span>
