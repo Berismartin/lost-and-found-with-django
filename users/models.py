@@ -49,3 +49,15 @@ class UserProfile(models.Model):
                     img.save(self.profile_picture.path)
             except Exception:
                 pass  # If PIL fails, continue without resizing
+
+
+class UserPoints(models.Model):
+    """
+    Tracks the user's earned points for successful item returns.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='points')
+    points = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Points: {self.points} for {self.user.username}"
