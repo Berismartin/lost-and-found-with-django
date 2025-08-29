@@ -1,0 +1,31 @@
+<html lang="en">
+<!-- <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head> -->
+<body>
+   <div class="comment" >
+    
+    <p>
+        <strong>{{ comment.user.username }}</strong>
+        <small>{{ comment.created_at|date:"F j, Y, g:i a" }}</small>
+        <br>
+        {{ comment.content }}
+    </p>
+
+    <form action="{% url 'add_reply' comment.item.id comment.id %}" method="post" style="display: none;">
+        {% csrf_token %}
+        <textarea name="content" placeholder="Reply to this comment..." required></textarea>
+        <button type="submit">Reply</button>
+    </form>
+    <a href="#" class="reply-button">Reply</a>
+
+    {% if comment.replies.all %}
+        {% for reply in comment.replies.all %}
+            {% include 'comment_thread.html' with comment=reply %}
+        {% endfor %}
+    {% endif %}
+</div> 
+</body>
+</html>
