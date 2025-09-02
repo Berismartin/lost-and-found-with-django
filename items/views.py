@@ -211,3 +211,6 @@ def report_item(request, pk):
         else:
             messages.error(request, 'Please provide a reason for reporting this item.')
     return render(request, 'items/report_item.html', {'item': item})
+
+
+
