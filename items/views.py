@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Max
 from django.db import models
-from .models import Item, ItemImage, Report, Comment
+from .models import Item, ItemImage, Report, Comment, Conversation, Message
 from .forms import ItemForm
 from .forms import CommentForm
 
@@ -257,4 +257,37 @@ def add_reply(request, item_pk, parent_id):
             reply.save()
     
     return redirect("item_detail", pk=item.pk)
+
+
+
+
+@login_required
+def conversation_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    if request.user not in conversation.participants.all():
+        return redirect('inbox') 
+
+    messages = conversation.messages.all()
+    return render(request, 'conversation.html', {
+        'conversation': conversation,
+        'messages': messages,
+    })
+    
+
+@login_required
+def send_message(request, conversation_id):
+    if request.method == 'POST':
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        if request.user not in conversation.participants.all():
+            return redirect('inbox')
+        content = request.POST.get('content')
+        if content:
+            print( "Saving message:", content)  
+            Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                content=content
+            )
+        return redirect('conversation_detail', conversation_id=conversation.id)
+    return redirect('inbox')
 
