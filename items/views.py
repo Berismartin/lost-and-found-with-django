@@ -83,12 +83,15 @@ def create_item(request):
 def item_detail(request, pk):
     """View that fetches and displays a single item's details"""
     item = get_object_or_404(Item, pk=pk, is_active=True)
+    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
+
     is_owner = request.user.is_authenticated and item.user == request.user
     context = {
         'item': item,
         'is_owner': is_owner,
     }
-    return render(request, 'items/item_detail.html', context)
+    return render(request, 'items/item_detail.html',{"item": item, "comments": comments})
+
 
 
 @login_required
@@ -217,8 +220,8 @@ def report_item(request, pk):
 
 
 @login_required
-def add_comment(request, item_id):
-    item = get_object_or_404(Item, id=item_id)
+def add_comment(request, pk):
+    item = get_object_or_404(Item, id=pk)
     if request.method == 'POST':
         content = request.POST.get('content')
         if content:
@@ -229,14 +232,14 @@ def add_comment(request, item_id):
             )
             # tag_user_notification(comment)
             
-    return redirect('item_detail', item_id=item_id)
+    return redirect('item_detail', pk=item.pk)
 
 
-def item_detail(request, pk):
-    item = get_object_or_404(Item, pk=pk)
-    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
-    form = CommentForm()
-    return render(request, "items/item_detail.html", {"item": item, "comments": comments})
+# def item_detail(request, pk):
+#     item = get_object_or_404(Item, pk=pk)
+#     comments = item.comments.filter(parent__isnull=True)  # only top-level comments
+#     form = CommentForm()
+#     return render(request, "items/item_detail.html", {"item": item, "comments": comments})
 
 
 @login_required
