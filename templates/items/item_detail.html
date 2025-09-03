@@ -123,6 +123,49 @@
     </div>
 </div>
 
+<!-- comment -->
+
+<div>
+    <h3>leave a Comment</h3>
+    <form method="post" action="{% url 'add_comment' item.pk %}"> 
+        {% csrf_token %}
+         {{ form.as_p }}
+         <button type="submit">Post Comment</button>
+    </form>
+</div>
+
+<!-- display comments and replies -->
+<h3>Comments</h3>
+{% for comment in comments %}
+    <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+
+        <!-- comment content -->
+        <p><strong>{{ comment.user.username }}</strong> — {{ comment.created_at|date:"M d, Y H:i" }}</p>
+        <p>{{ comment.content }}</p>
+
+        <!-- reply form for each comment -->
+        <form method="post" action="{% url 'add_reply' item.pk comment.id %}">
+            {% csrf_token %}
+            <input type="text" name="content" placeholder="Reply..." required>
+            <button type="submit">Reply</button>
+        </form>
+
+        <!-- display replies -->
+        {% if comment.replies.all %}
+            <div style="margin-left: 30px; border-left: 2px solid #ddd; padding-left: 10px;">
+                {% for reply in comment.replies.all %}
+                    <p><strong>{{ reply.user.username }}</strong> — {{ reply.created_at|date:"M d, Y H:i" }}</p>
+                    <p>{{ reply.content }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No comments yet. Be the first!</p>
+{% endfor %}
+
+
+
 
 <!-- Navigation -->
 <div class="text-center mt-3">

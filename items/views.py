@@ -4,8 +4,10 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Max
 from django.db import models
-from .models import Item, ItemImage, Report
+from .models import Item, ItemImage, Report, Comment
 from .forms import ItemForm
+from .forms import CommentForm
+
 from users.models import UserPoints
 from django.contrib.auth import get_user_model
 
@@ -213,4 +215,46 @@ def report_item(request, pk):
     return render(request, 'items/report_item.html', {'item': item})
 
 
+
+@login_required
+def add_comment(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            comment = Comment.objects.create(
+                item=item,
+                user=request.user,
+                content=content
+            )
+            # tag_user_notification(comment)
+            
+    return redirect('item_detail', item_id=item_id)
+
+
+def item_detail(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
+    form = CommentForm()
+    return render(request, "items/item_detail.html", {"item": item, "comments": comments})
+
+
+@login_required
+def add_reply(request, item_pk, parent_id):
+    """
+    Handle posting a reply to a comment.
+    """
+    item = get_object_or_404(Item, pk=item_pk)
+    parent_comment = get_object_or_404(Comment, pk=parent_id)
+
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            reply = form.save(commit=False)
+            reply.user = request.user
+            reply.item = item
+            reply.parent = parent_comment  # mark this comment as a reply
+            reply.save()
+    
+    return redirect("item_detail", pk=item.pk)
 
