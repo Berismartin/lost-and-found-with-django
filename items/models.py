@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from PIL import Image
 import os
+from django.utils import timezone
+
 
 
 class Item(models.Model):

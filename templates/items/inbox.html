@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Inbox - Lost & Found{% endblock %}
+    <h2>Inbox</h2>
+    <ul>
+  {% for convo in conversations %}
+    <li>
+      <a href="{% url 'conversation_detail' convo.id %}">
+        <!-- Conversation about {{ convo.item.name }} -->
+         Conversation with
+            {% for participant in convo.participants.all %}
+            {% if participant != user %}
+                {{ participant.username }}
+                <!-- {% if not forloop.last %},
+                 {% endif %} -->
+            {% endif %}
+            {% endfor %}
+      </a>
+    </li>
+  {% empty %}
+    <li>No conversations yet.</li>
+  {% endfor %}
+</ul>
+    
