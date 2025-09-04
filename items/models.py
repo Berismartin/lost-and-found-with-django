@@ -181,7 +181,9 @@ class Comment(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Comment by {self.user.username} on {self.item.name}"
+        # return f"Comment by {self.user.username} on {self.item.name}"
+        return self.parent is not None
+
     
 
 

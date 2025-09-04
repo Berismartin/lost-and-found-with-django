@@ -83,14 +83,12 @@ def create_item(request):
 def item_detail(request, pk):
     """View that fetches and displays a single item's details"""
     item = get_object_or_404(Item, pk=pk, is_active=True)
-    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
-
     is_owner = request.user.is_authenticated and item.user == request.user
     context = {
         'item': item,
         'is_owner': is_owner,
     }
-    return render(request, 'items/item_detail.html',{"item": item, "comments": comments})
+    return render(request, 'items/item_detail.html',{"item": item})
 
 
 
@@ -215,17 +213,17 @@ def report_item(request, pk):
             return redirect('item_detail', pk=pk)
         else:
             messages.error(request, 'Please provide a reason for reporting this item.')
-    return render(request, 'items/report_item.html', {'item': item})
+    return render(request, 'items/report_item.html', {'item': item, "form": CommentForm(), "comments": item.comments.filter(parent__isnull=True)})
 
 
 
 @login_required
 def add_comment(request, pk):
-    item = get_object_or_404(Item, id=pk)
+    item = get_object_or_404(Item, pk=pk)
     if request.method == 'POST':
         content = request.POST.get('content')
         if content:
-            comment = Comment.objects.create(
+             Comment.objects.create(
                 item=item,
                 user=request.user,
                 content=content
@@ -235,11 +233,14 @@ def add_comment(request, pk):
     return redirect('item_detail', pk=item.pk)
 
 
-# def item_detail(request, pk):
-#     item = get_object_or_404(Item, pk=pk)
-#     comments = item.comments.filter(parent__isnull=True)  # only top-level comments
-#     form = CommentForm()
-#     return render(request, "items/item_detail.html", {"item": item, "comments": comments})
+def item_detail(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
+    form = CommentForm()
+    return render(request, "items/item_detail.html", {
+        "item": item,
+        "comments": comments,
+        "form": form,})
 
 
 @login_required
@@ -248,7 +249,7 @@ def add_reply(request, item_pk, parent_id):
     Handle posting a reply to a comment.
     """
     item = get_object_or_404(Item, pk=item_pk)
-    parent_comment = get_object_or_404(Comment, pk=parent_id)
+    parent_comment = get_object_or_404(Comment, pk=parent_id,)
 
     if request.method == "POST":
         form = CommentForm(request.POST)

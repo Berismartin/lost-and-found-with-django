@@ -107,8 +107,8 @@ class CommentForm(forms.ModelForm):
         widgets = {
             "content": forms.Textarea(attrs={
                 "placeholder": "Write a comment...",
-                "rows": 2,
-                "cols": 40,
+                "rows": 1,
+                # "cols": 40,
                 "class": "form-control"
             }),
         }
