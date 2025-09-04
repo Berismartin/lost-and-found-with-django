@@ -14,8 +14,10 @@ urlpatterns = [
     path('items/<int:pk>/status/', views.change_item_status, name='change_item_status'),
     path('items/<int:pk>/report/', views.report_item, name='report_item'),
     path('my-items/', views.my_items, name='my_items'),
-    path('inbox/', views.inbox_view, name='inbox'),
     path('conversations/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
+    path('coversations/<int:conversation_id>/', views.start_conversation, name='start_conversation'),
+    path('inbox/', views.inbox_view, name='inbox'),
+
 
     
 

@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}Inbox - Lost & Found{% endblock %}
-    <h2>Inbox</h2>
+{% block content %}
+
+<div>
+    <div class="card-header">
+        <h2>Inbox</h2>
+        <p>View and manage your conversations</p>
+    </div>
+</div>
+
+<div class="card-body">
+    {% if conversations %}
     <ul>
-  {% for convo in conversations %}
-    <li>
-      <a href="{% url 'conversation_detail' convo.id %}">
+        {% for convo in conversations %}
+        <li>
+            <a href="{% url 'conversation_detail' convo.id %}">
         <!-- Conversation about {{ convo.item.name }} -->
          Conversation with
             {% for participant in convo.participants.all %}
@@ -15,9 +25,17 @@
             {% endif %}
             {% endfor %}
       </a>
+      <span class="badge bg-secondary">
+        {{ convo.messages.count }} Messages
+      </span>
     </li>
-  {% empty %}
-    <li>No conversations yet.</li>
-  {% endfor %}
-</ul>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>No conversations yet.</p>
+    {% endif %}
+</div>
+
+</div>
+{% endblock %}
     

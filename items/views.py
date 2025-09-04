@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -7,6 +8,7 @@ from django.db import models
 from .models import Item, ItemImage, Report, Comment, Conversation, Message
 from .forms import ItemForm
 from .forms import CommentForm
+from django.urls import reverse 
 
 from users.models import UserPoints
 from django.contrib.auth import get_user_model
@@ -267,17 +269,17 @@ def add_reply(request, item_pk, parent_id):
 @login_required
 def inbox_view(request):
     conversations = request.user.conversations.all()
-    return render(request, "inbox.html", {"conversations": conversations})
+    return render(request, "items/inbox.html", {"conversations": conversations})
 
 
 @login_required
 def conversation_detail(request, conversation_id):
-    conversation = get_object_or_404(Conversation, id=conversation_id)
+    conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
     if request.user not in conversation.participants.all():
         return redirect('inbox') 
 
     messages = conversation.messages.all()
-    return render(request, 'conversation.html', {
+    return render(request, 'items/conversation.html', {
         'conversation': conversation,
         'messages': messages,
     })
@@ -299,4 +301,24 @@ def send_message(request, conversation_id):
             )
         return redirect('conversation_detail', conversation_id=conversation.id)
     return redirect('inbox')
+
+
+
+
+@login_required
+def start_conversation(request, user_id):
+    other_user = get_object_or_404(User, id=user_id)
+
+    if other_user == request.user:
+        return redirect("inbox")  # prevent chatting with yourself
+
+    # check if conversation already exists
+    conversation = Conversation.objects.filter(participants=request.user).filter(participants=other_user).first()
+
+    if not conversation:
+        conversation = Conversation.objects.create()
+        conversation.participants.add(request.user, other_user)
+
+    return redirect("conversation_detail", conversation_id=conversation.id)
+
 

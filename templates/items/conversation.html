@@ -3,27 +3,28 @@
 
 {% block content %}
 
-<body>
+
     <h2>Conversation on {{ conversation.item.name }}</h2>
-    <div>
+    <div style="border:1px solid #ddd; padding:10px; height:300px; overflow-y:auto;">
         {% for msg in messages %}
 
-        <p><b>{{ msg.sender.username }}:</b> {{ msg.content }} <small>{{ msg.created_at }}</small></p>
-       {% empty %}
-       <p>No messages yet.</p>
-       {% endfor %}
+        <p>
+            <b>{{ msg.sender.username }}:</b> {{ msg.content }} <small>{{ msg.created_at }}</small>
+            <span style="font-size: small; color: gray">{% load tz %}
+                {% localtime on %}{{ msg.created_at|date:"M d, Y H:i" }}{% endlocaltime %}</span>
+        </p>
+        {%endfor%}
+    </div>
+       
 
-  
-   </div>
 
  <form method="POST" action="{% url 'send_message' conversation.id %}">
   {% csrf_token %}
-  <textarea name="content"></textarea>
+  <input type="text" name="content" placeholder="Type a message..." required>
+
   <button type="submit">Send</button>
-  <!-- {{ form.as_p }}
-  <button type="submit">Send</button> -->
  </form>
 
 
     
-</body>
+
