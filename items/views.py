@@ -264,6 +264,11 @@ def add_reply(request, item_pk, parent_id):
 
 
 
+@login_required
+def inbox_view(request):
+    conversations = request.user.conversations.all()
+    return render(request, "inbox.html", {"conversations": conversations})
+
 
 @login_required
 def conversation_detail(request, conversation_id):
