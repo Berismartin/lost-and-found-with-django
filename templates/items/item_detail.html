@@ -124,18 +124,20 @@
 </div>
 
 
+
 <!-- Comment Section -->
-<div class="comment-section" style=" margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-    <h3>leave a Comment</h3>
+<div class="comment-section" style=" margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: white;">
+    <h3 style="color: var(--primary-blue);">Comments</h3>
     <form method="post" action="{%url 'add_comment' item.pk%}">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" id="postBtn" style="display:none; background:#065fd4; color:white; border:none; padding:6px 12px; border-radius:4px;">Comment</button>
     </form>
 
-         <!-- <button type="submit">Post Comment</button> -->
+         
           <!-- display comments and replies -->
         {% for comment in comments %}
+        <div class="comment" style="margin-bottom: 15px;">
           <!-- comment content -->
            <p>
             <strong>{{ comment.user.username }}:<span style="font-weight: lighter;">{{ comment.content }}</span></strong> 
@@ -158,11 +160,20 @@
             
             <!-- display replies -->
             {% if comment.replies.exists %}
+            <button class="toggle-replies-btn" data-comment-id="{{ comment.id }}" style="background:none; border:none; color:#065fd4; cursor:pointer; padding:0; margin-top:5px;">
+                View Replies ({{ comment.replies.count }})
+            </button>
+
+            <div class="replies" id="replies-{{ comment.id }}" style="margin-left: 20px; margin-top: 10px;">
+                
                 {% for reply in comment.replies.all %}
                   <p><strong>{{ reply.user.username }}: <span style="font-weight: lighter;">{{ reply.content }}</span></strong> — <span style="font-size: small;">{{ reply.created_at|date:"M d, Y H:i" }}</span></p>
              
                 {% endfor %}
+            </div>
             {% endif %}
+
+        </div>
              
         {% empty %}
               <p>No comments yet. Be the first!</p>
