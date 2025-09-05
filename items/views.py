@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Max
 from django.db import models
-from .models import Item, ItemImage, Report, Comment, Conversation, Message
+from .models import Item, ItemImage, Report, Comment, Conversation, Message, Notification
 from .forms import ItemForm
 from .forms import CommentForm
 from django.urls import reverse 
@@ -266,10 +266,38 @@ def add_reply(request, item_pk, parent_id):
 
 
 
+# @login_required
+# def inbox_view(request,):
+#     conversations = request.user.conversations.all()
+#     return render(request, "items/inbox.html", {"conversations": conversations})
+
+
+
 @login_required
-def inbox_view(request):
-    conversations = request.user.conversations.all()
-    return render(request, "items/inbox.html", {"conversations": conversations})
+def inbox_view(request, item_id):
+    item = get_object_or_404(Item, pk=item_id)
+    poster = item.user  # Assuming `user` is the ForeignKey to the poster
+
+    if request.user == poster:
+        return redirect('item_detail', pk=item.pk)
+
+    # Check if a conversation already exists between current user and poster
+    conversation = Conversation.objects.filter(participants=request.user).filter(participants=poster).first()
+    
+    if not conversation:
+        # Create a new conversation
+        conversation = Conversation.objects.create(item=item)
+        conversation.participants.add(request.user, poster)
+        conversation.save()
+
+        Notification.objects.create(
+            user=poster,
+            message=f"{request.user.username} has started a conversation about your item '{item.name}'.",
+            link=reverse('conversation_detail', args=[conversation.id])
+        )
+    
+    return redirect('conversation_detail', conversation_id=conversation.pk)
+
 
 
 @login_required
@@ -321,4 +349,7 @@ def start_conversation(request, user_id):
 
     return redirect("conversation_detail", conversation_id=conversation.id)
 
-
+# @login_required
+# def inbox_list(request):
+#     conversations = Conversation.objects.filter(participants=request.user)
+#     return render(request, "inbox.html", {"conversations": conversations})

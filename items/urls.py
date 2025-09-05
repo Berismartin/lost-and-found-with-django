@@ -16,7 +16,10 @@ urlpatterns = [
     path('my-items/', views.my_items, name='my_items'),
     path('conversations/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
     path('coversations/<int:conversation_id>/', views.start_conversation, name='start_conversation'),
-    path('inbox/', views.inbox_view, name='inbox'),
+    path('conversations/<int:conversation_id>/send_message/', views.send_message, name='send_message'),
+    path('inbox/<int:item_id>', views.inbox_view, name='inbox'),
+    # path("inbox/", views.inbox_list, name="inbox_list"),
+
 
 
     

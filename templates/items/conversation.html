@@ -5,7 +5,7 @@
 
 
     <h2>Conversation on {{ conversation.item.name }}</h2>
-    <div style="border:1px solid #ddd; padding:10px; height:300px; overflow-y:auto;">
+    <div style="border:1px solid #ddd; padding:10px; height:300px; overflow-y:auto; background-color: white; border-radius: 10px;">
         {% for msg in messages %}
 
         <p>
@@ -22,8 +22,10 @@
   {% csrf_token %}
   <input type="text" name="content" placeholder="Type a message..." required>
 
-  <button type="submit">Send</button>
+  <button type="submit" class="btn btn-primary" >Send</button>
  </form>
+
+{%endblock %}
 
 
     

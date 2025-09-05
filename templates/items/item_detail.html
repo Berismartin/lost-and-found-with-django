@@ -102,6 +102,10 @@
                     <a href="{% url 'change_item_status' item.pk %}" class="btn" style="background: #0A2342; color: #fff;">Change Status</a>
                 {% endif %}
                 <a href="{% url 'report_item' item.pk %}" class="btn" style="background: #FF9F1C; color: #171717;">Report</a>
+                {% if request.user != item.user %}
+                <a href="{% url 'inbox' item.pk%}" class="btn" style="background: #022775; color: #fff;">Message Poster</a>
+                {% endif %}
+               
             </div>
 
 
@@ -233,6 +237,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
+
 
 <!-- Navigation -->
 <div class="text-center mt-3">
