@@ -1,0 +1,264 @@
+<!-- _notifications.html - Partial template for dynamic notification loading -->
+{% load humanize %}
+
+<div class="notifications-container">
+    {% if notifications %}
+        {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" 
+                 data-id="{{ notification.id }}"
+                 data-url="{{ notification.action_url|default:'' }}">
+                
+                <div class="d-flex align-items-start">
+                    <!-- Notification Icon -->
+                    <div class="notification-icon {{ notification.notification_type|default:'info' }}">
+                        {% if notification.notification_type == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif notification.notification_type == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% elif notification.notification_type == 'error' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                        {% elif notification.notification_type == 'message' %}
+                            <i class="fas fa-envelope"></i>
+                        {% elif notification.notification_type == 'system' %}
+                            <i class="fas fa-cog"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Notification Content -->
+                    <div class="notification-content flex-grow-1">
+                        <div class="notification-title">
+                            {{ notification.title|truncatechars:50 }}
+                            {% if notification.priority == 'high' %}
+                                <span class="badge bg-danger ms-2">High Priority</span>
+                            {% elif notification.priority == 'urgent' %}
+                                <span class="badge bg-warning ms-2">Urgent</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="notification-message">
+                            {{ notification.message|truncatechars:80|linebreaksbr }}
+                        </div>
+                        
+                        <div class="notification-meta d-flex justify-content-between align-items-center">
+                            <div class="notification-time">
+                                <i class="fas fa-clock me-1"></i>
+                                <span title="{{ notification.created_at|date:'Y-m-d H:i:s' }}">
+                                    {{ notification.created_at|naturaltime }}
+                                </span>
+                            </div>
+                            
+                            <!-- Notification Actions -->
+                            <div class="notification-actions-inline">
+                                {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-primary mark-read-btn" 
+                                            data-id="{{ notification.id }}"
+                                            title="Mark as read">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                {% if notification.action_url %}
+                                    <a href="{{ notification.action_url }}" 
+                                       class="btn btn-sm btn-outline-secondary"
+                                       title="View details">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                {% endif %}
+                                
+                                <button class="btn btn-sm btn-outline-danger delete-notification-btn" 
+                                        data-id="{{ notification.id }}"
+                                        title="Delete notification">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Read Status Indicator -->
+                    {% if not notification.is_read %}
+                        <div class="unread-indicator ms-2">
+                            <i class="fas fa-circle text-primary" style="font-size: 8px;"></i>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- Pagination Controls -->
+        {% if pagination.total_pages > 1 %}
+            <div class="notification-pagination mt-3">
+                <nav aria-label="Notifications pagination">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        {% if pagination.has_previous %}
+                            <li class="page-item">
+                                <button class="page-link load-page-btn" 
+                                        data-page="{{ pagination.current_page|add:-1 }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                            </li>
+                        {% endif %}
+                        
+                        <!-- Page numbers -->
+                        {% for page_num in pagination.page_range %}
+                            <li class="page-item {% if page_num == pagination.current_page %}active{% endif %}">
+                                <button class="page-link load-page-btn" 
+                                        data-page="{{ page_num }}">
+                                    {{ page_num }}
+                                </button>
+                            </li>
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                            <li class="page-item">
+                                <button class="page-link load-page-btn" 
+                                        data-page="{{ pagination.current_page|add:1 }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                
+                <!-- Pagination Info -->
+                <div class="pagination-info text-center mt-2">
+                    <small class="text-muted">
+                        Showing {{ pagination.start_index|default:1 }}-{{ pagination.end_index|default:pagination.total_count }} 
+                        of {{ pagination.total_count }} notification{{ pagination.total_count|pluralize }}
+                    </small>
+                </div>
+            </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="notification-empty text-center py-4">
+            <div class="mb-3">
+                <i class="fas fa-bell-slash text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+            <h6 class="text-muted">No notifications</h6>
+            <p class="text-muted mb-0">You're all caught up! New notifications will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Filter Controls (if needed) -->
+<div class="notification-filters mt-3 d-none" id="notificationFilters">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <select class="form-select form-select-sm" id="typeFilter">
+                <option value="">All Types</option>
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+                <option value="message">Messages</option>
+                <option value="system">System</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select form-select-sm" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="unread">Unread Only</option>
+                <option value="read">Read Only</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select form-select-sm" id="sortFilter">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="priority">By Priority</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="notification-bulk-actions mt-3 d-none" id="bulkActionsBar">
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <span>
+            <strong id="selectedCount">0</strong> notification(s) selected
+        </span>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" id="bulkMarkReadBtn">
+                <i class="fas fa-check me-1"></i>Mark Read
+            </button>
+            <button class="btn btn-outline-secondary" id="bulkMarkUnreadBtn">
+                <i class="fas fa-undo me-1"></i>Mark Unread
+            </button>
+            <button class="btn btn-outline-danger" id="bulkDeleteBtn">
+                <i class="fas fa-trash me-1"></i>Delete
+            </button>
+            <button class="btn btn-outline-secondary" id="cancelSelectionBtn">
+                <i class="fas fa-times me-1"></i>Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Additional styles specific to the notifications partial */
+.notifications-container .notification-item {
+    padding: 15px;
+    border-bottom: 1px solid #f1f3f4;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.notifications-container .notification-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.notifications-container .notification-item:last-child {
+    border-bottom: none;
+}
+
+.notifications-container .notification-item.unread {
+    background-color: #fff8e1;
+    border-left: 4px solid #ff9800;
+}
+
+.notifications-container .notification-item.unread:hover {
+    background-color: #fff3c4;
+}
+
+.notifications-container .notification-item.selected {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+
+.notification-content .notification-title {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+
+.notification-content .notification-message {
+    color: #6c757d;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.notification-meta {
+    font-size: 12px;
+    color: #adb5bd;
+}
+
+.notification-actions-inline {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.notification-item:hover .notification-actions-inline {
+    opacity: 1;
+}
+
+.notification-actions-inline .btn {
+    margin-left: 4px;
+    border-radius: 4
