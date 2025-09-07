@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ item.title }} - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="text-center mb-3">Edit Item: {{ item.title }}</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Item Title *</label>
+            {{ form.title }}
+            {% if form.title.help_text %}
+                <small class="form-text text-muted">{{ form.title.help_text }}</small>
+            {% endif %}
+            {% if form.title.errors %}
+                <div class="text-danger">{{ form.title.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description *</label>
+            {{ form.description }}
+            {% if form.description.help_text %}
+                <small class="form-text text-muted">{{ form.description.help_text }}</small>
+            {% endif %}
+            {% if form.description.errors %}
+                <div class="text-danger">{{ form.description.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category *</label>
+                {{ form.category }}
+                {% if form.category.help_text %}
+                    <small class="form-text text-muted">{{ form.category.help_text }}</small>
+                {% endif %}
+                {% if form.category.errors %}
+                    <div class="text-danger">{{ form.category.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.status.id_for_label }}">Status *</label>
+                {{ form.status }}
+                {% if form.status.help_text %}
+                    <small class="form-text text-muted">{{ form.status.help_text }}</small>
+                {% endif %}
+                {% if form.status.errors %}
+                    <div class="text-danger">{{ form.status.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.image.id_for_label }}">Main Item Photo</label>
+            {% if item.image %}
+                <div class="mb-2">
+                    <img src="{{ item.image.url }}" alt="Current main image" style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 4px;">
+                    <p><small>Current main image (upload new to replace)</small></p>
+                </div>
+            {% endif %}
+            {{ form.image }}
+            {% if form.image.help_text %}
+                <small class="form-text text-muted">{{ form.image.help_text }}</small>
+            {% endif %}
+            {% if form.image.errors %}
+                <div class="text-danger">{{ form.image.errors.0 }}</div>
+            {% endif %}
+            
+            <!-- Main image preview -->
+            <div id="main-image-preview" class="mt-2" style="display: none;">
+                <img id="main-preview-img" src="" alt="New main image preview" style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 4px;">
+            </div>
+        </div>
+        
+        <!-- Existing additional images -->
+        {% if item.item_images.exists %}
+        <div class="form-group">
+            <label>Current Additional Images</label>
+            <div class="d-flex gap-2" style="flex-wrap: wrap;">
+                {% for item_image in item.item_images.all %}
+                <div class="position-relative" style="display: inline-block; margin: 5px;">
+                    <img src="{{ item_image.image.url }}" alt="Additional image" style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 2px solid var(--neutral-gray);">
+                    <small class="d-block text-center mt-1">{{ item_image.caption|default:"Image" }}</small>
+                </div>
+                {% endfor %}
+            </div>
+            <small class="text-muted">To manage these images individually, use the admin interface or delete/re-add them.</small>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+            <label for="{{ form.additional_images.id_for_label }}">Add More Photos</label>
+            {{ form.additional_images }}
+            {% if form.additional_images.help_text %}
+                <small class="form-text text-muted">{{ form.additional_images.help_text }}</small>
+            {% endif %}
+            {% if form.additional_images.errors %}
+                <div class="text-danger">{{ form.additional_images.errors.0 }}</div>
+            {% endif %}
+            
+            <!-- Additional images preview -->
+            <div id="additional-images-preview" class="mt-2">
+                <div id="preview-container" class="d-flex gap-2" style="flex-wrap: wrap;"></div>
+            </div>
+        </div>
+        
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label for="{{ form.location_lost_found.id_for_label }}">Location</label>
+                {{ form.location_lost_found }}
+                {% if form.location_lost_found.help_text %}
+                    <small class="form-text text-muted">{{ form.location_lost_found.help_text }}</small>
+                {% endif %}
+                {% if form.location_lost_found.errors %}
+                    <div class="text-danger">{{ form.location_lost_found.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.date_lost_found.id_for_label }}">Date & Time</label>
+                {{ form.date_lost_found }}
+                {% if form.date_lost_found.help_text %}
+                    <small class="form-text text-muted">{{ form.date_lost_found.help_text }}</small>
+                {% endif %}
+                {% if form.date_lost_found.errors %}
+                    <div class="text-danger">{{ form.date_lost_found.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.contact_info.id_for_label }}">Additional Contact Information</label>
+            {{ form.contact_info }}
+            {% if form.contact_info.help_text %}
+                <small class="form-text text-muted">{{ form.contact_info.help_text }}</small>
+            {% endif %}
+            {% if form.contact_info.errors %}
+                <div class="text-danger">{{ form.contact_info.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary">Update Item</button>
+            <a href="{% url 'item_detail' item.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Main image preview
+    const mainImageInput = document.getElementById('id_image');
+    const mainPreview = document.getElementById('main-image-preview');
+    const mainPreviewImg = document.getElementById('main-preview-img');
+    
+    if (mainImageInput) {
+        mainImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mainPreviewImg.src = e.target.result;
+                    mainPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                mainPreview.style.display = 'none';
+            }
+        });
+    }
+    
+    // Additional images preview
+    const additionalImagesInput = document.getElementById('additional-images');
+    const previewContainer = document.getElementById('preview-container');
+    
+    if (additionalImagesInput) {
+        additionalImagesInput.addEventListener('change', function(e) {
+            // Clear existing previews
+            previewContainer.innerHTML = '';
+            
+            const files = Array.from(e.target.files);
+            files.forEach((file, index) => {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'position-relative';
+                        imgContainer.style.cssText = 'display: inline-block; margin: 5px;';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = `Preview ${index + 1}`;
+                        img.style.cssText = 'width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 2px solid var(--success-green);';
+                        
+                        const label = document.createElement('small');
+                        label.className = 'd-block text-center mt-1';
+                        label.textContent = 'New Image';
+                        label.style.color = 'var(--success-green)';
+                        
+                        imgContainer.appendChild(img);
+                        imgContainer.appendChild(label);
+                        previewContainer.appendChild(imgContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Show file count
+            if (files.length > 0) {
+                const countDiv = document.createElement('div');
+                countDiv.className = 'mt-2';
+                countDiv.innerHTML = `<small class="text-muted">${files.length} new image(s) selected</small>`;
+                previewContainer.appendChild(countDiv);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

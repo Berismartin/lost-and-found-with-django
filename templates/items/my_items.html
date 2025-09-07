@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}My Items - Lost & Found{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h1>My Items</h1>
+        <p>Manage your lost and found item posts</p>
+    </div>
+    
+    <!-- Status Filter -->
+    <form method="get" class="mb-3">
+        <div class="form-group">
+            <label for="status">Filter by Status</label>
+            <select name="status" id="status" class="form-control" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                {% for value, display in statuses %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                        {{ display }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    
+    <div class="text-center">
+        <a href="{% url 'create_item' %}" class="btn btn-primary">Post New Item</a>
+    </div>
+</div>
+
+<!-- Items List -->
+{% if page_obj %}
+    <div class="mb-3">
+        <p>Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} items</p>
+    </div>
+    
+    <div class="grid grid-2">
+        {% for item in page_obj %}
+        <div class="card">
+            <div class="grid grid-2">
+                <!-- Item Image -->
+                <div>
+                    {% if item.main_image %}
+                        <img src="{{ item.main_image.url }}" alt="{{ item.title }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+                    {% else %}
+                        <div style="width: 100%; height: 150px; background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; border-radius: 4px; color: var(--text-black);">
+                            <span style="font-size: 3rem;">📦</span>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Item Details -->
+                <div>
+                    <div class="card-header">
+                        <h4 class="card-title">{{ item.title }}</h4>
+                        <div class="card-meta">
+                            <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                            <span>{{ item.get_category_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <p>{{ item.description|truncatewords:15 }}</p>
+                    
+                    {% if item.location_lost_found %}
+                        <p><strong>📍</strong> {{ item.location_lost_found }}</p>
+                    {% endif %}
+                    
+                    <div class="card-meta mb-2">
+                        <small>Posted {{ item.created_at|timesince }} ago</small>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-1" style="flex-wrap: wrap;">
+                        <a href="{% url 'item_detail' item.pk %}" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem;">View</a>
+                        <a href="{% url 'edit_item' item.pk %}" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem;">Edit</a>
+                        {% if item.status != 'claimed' %}
+                            <a href="{% url 'mark_claimed' item.pk %}" class="btn btn-success" style="font-size: 0.875rem; padding: 0.5rem;">Claim</a>
+                        {% endif %}
+                        <a href="{% url 'delete_item' item.pk %}" class="btn btn-danger" style="font-size: 0.875rem; padding: 0.5rem;">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+            {% endif %}
+            
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Last &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+{% else %}
+    <div class="card text-center">
+        <h3>No items posted yet</h3>
+        <p>{% if status_filter %}
+            No items with "{{ status_filter }}" status found.
+           {% else %}
+            You haven't posted any items yet. Start by posting your first lost or found item!
+           {% endif %}</p>
+        
+        <a href="{% url 'create_item' %}" class="btn btn-primary">Post Your First Item</a>
+        {% if status_filter %}
+            <a href="{% url 'my_items' %}" class="btn btn-secondary">View All Items</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

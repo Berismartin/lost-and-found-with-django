@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="text-center mb-3">Edit Your Profile</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <h4 class="mb-2" style="color: var(--primary-blue);">Personal Information</h4>
+        
+        <div class="form-group">
+            <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
+            {{ user_form.first_name }}
+            {% if user_form.first_name.errors %}
+                <div class="text-danger">{{ user_form.first_name.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
+            {{ user_form.last_name }}
+            {% if user_form.last_name.errors %}
+                <div class="text-danger">{{ user_form.last_name.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ user_form.username.id_for_label }}">Username</label>
+            {{ user_form.username }}
+            {% if user_form.username.errors %}
+                <div class="text-danger">{{ user_form.username.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ user_form.email.id_for_label }}">Email Address</label>
+            {{ user_form.email }}
+            {% if user_form.email.errors %}
+                <div class="text-danger">{{ user_form.email.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <hr class="my-3">
+        <h4 class="mb-2" style="color: var(--primary-blue);">Profile Details</h4>
+        
+        <div class="form-group">
+            <label for="{{ profile_form.profile_picture.id_for_label }}">Profile Picture</label>
+            {{ profile_form.profile_picture }}
+            {% if profile_form.profile_picture.errors %}
+                <div class="text-danger">{{ profile_form.profile_picture.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ profile_form.bio.id_for_label }}">Bio</label>
+            {{ profile_form.bio }}
+            {% if profile_form.bio.errors %}
+                <div class="text-danger">{{ profile_form.bio.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ profile_form.phone_number.id_for_label }}">Phone Number</label>
+            {{ profile_form.phone_number }}
+            {% if profile_form.phone_number.errors %}
+                <div class="text-danger">{{ profile_form.phone_number.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ profile_form.location.id_for_label }}">Location</label>
+            {{ profile_form.location }}
+            {% if profile_form.location.errors %}
+                <div class="text-danger">{{ profile_form.location.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ profile_form.date_of_birth.id_for_label }}">Date of Birth</label>
+            {{ profile_form.date_of_birth }}
+            {% if profile_form.date_of_birth.errors %}
+                <div class="text-danger">{{ profile_form.date_of_birth.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <a href="{% url 'profile_view' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

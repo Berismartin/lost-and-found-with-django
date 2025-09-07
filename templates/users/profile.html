@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header text-center">
+        <h2>{{ user.first_name }} {{ user.last_name }}'s Profile</h2>
+    </div>
+    
+    <div class="grid grid-2">
+        <!-- Profile Picture and Basic Info -->
+        <div class="text-center">
+            {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="profile-image mb-2">
+            {% else %}
+                <div class="profile-image mb-2" style="background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; color: var(--text-black);">
+                    <span style="font-size: 3rem;">👤</span>
+                </div>
+            {% endif %}
+            
+            <h3>{{ user.username }}</h3>
+            <p class="text-muted">{{ user.email }}</p>
+            
+            <a href="{% url 'edit_profile' %}" class="btn btn-primary mt-2">Edit Profile</a>
+        </div>
+        
+        <!-- Profile Details -->
+        <div>
+            <h4 class="mb-2">Profile Information</h4>
+            
+            <div class="mb-2">
+                <strong>First Name:</strong> {{ user.first_name|default:"Not provided" }}
+            </div>
+            
+            <div class="mb-2">
+                <strong>Last Name:</strong> {{ user.last_name|default:"Not provided" }}
+            </div>
+            
+            <div class="mb-2">
+                <strong>Phone Number:</strong> {{ profile.phone_number|default:"Not provided" }}
+            </div>
+            
+            <div class="mb-2">
+                <strong>Location:</strong> {{ profile.location|default:"Not provided" }}
+            </div>
+            
+            <div class="mb-2">
+                <strong>Date of Birth:</strong> {{ profile.date_of_birth|default:"Not provided" }}
+            </div>
+            
+            <div class="mb-2">
+                <strong>Member Since:</strong> {{ user.date_joined|date:"F d, Y" }}
+            </div>
+            
+            {% if profile.bio %}
+                <div class="mt-3">
+                    <strong>Bio:</strong>
+                    <p>{{ profile.bio }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- User's Items Summary -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h3>My Items Summary</h3>
+    </div>
+    
+    <div class="grid grid-3">
+        <div class="text-center">
+            <h4 style="color: var(--error-red);">{{ lost_count }}</h4>
+            <p>Lost Items</p>
+        </div>
+        
+        <div class="text-center">
+            <h4 style="color: var(--success-green);">{{ found_count }}</h4>
+            <p>Found Items</p>
+        </div>
+        
+        <div class="text-center">
+            <h4 style="color: var(--text-black);">{{ claimed_count }}</h4>
+            <p>Claimed Items</p>
+        </div>
+    </div>
+    
+    <div class="text-center mt-3">
+        <a href="{% url 'my_items' %}" class="btn btn-secondary">View All My Items</a>
+    </div>
+</div>
+{% endblock %}

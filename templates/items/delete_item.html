@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ item.title }} - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="text-center mb-3" style="color: var(--error-red);">Delete Item</h2>
+    
+    <div class="alert alert-warning text-center">
+        <h4>⚠️ Are you sure you want to delete this item?</h4>
+        <p>This action cannot be undone.</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ item.title }}</h3>
+            <div class="card-meta">
+                <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                <span>{{ item.get_category_display }}</span>
+            </div>
+        </div>
+        
+        {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" style="max-width: 300px; max-height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 1rem;">
+        {% endif %}
+        
+        <p>{{ item.description|truncatewords:30 }}</p>
+        
+        {% if item.location_lost_found %}
+            <p><strong>Location:</strong> {{ item.location_lost_found }}</p>
+        {% endif %}
+        
+        <p><strong>Posted:</strong> {{ item.created_at|date:"F d, Y g:i A" }}</p>
+    </div>
+    
+    <form method="post" class="text-center mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete Item</button>
+        <a href="{% url 'item_detail' item.pk %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

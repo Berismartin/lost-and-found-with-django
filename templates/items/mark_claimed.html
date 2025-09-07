@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark as Claimed - {{ item.title }} - Lost & Found{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="text-center mb-3" style="color: var(--success-green);">Mark Item as Claimed</h2>
+    
+    <div class="alert alert-success text-center">
+        <h4>🎉 Great news!</h4>
+        <p>Are you ready to mark this item as successfully claimed?</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ item.title }}</h3>
+            <div class="card-meta">
+                <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                <span>{{ item.get_category_display }}</span>
+            </div>
+        </div>
+        
+        {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" style="max-width: 300px; max-height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 1rem;">
+        {% endif %}
+        
+        <p>{{ item.description|truncatewords:30 }}</p>
+        
+        {% if item.location_lost_found %}
+            <p><strong>Location:</strong> {{ item.location_lost_found }}</p>
+        {% endif %}
+        
+        <p><strong>Posted:</strong> {{ item.created_at|date:"F d, Y g:i A" }}</p>
+    </div>
+    
+    <div class="alert alert-info">
+        <p><strong>What happens when you mark an item as claimed?</strong></p>
+        <ul>
+            <li>The item status will change to "Claimed"</li>
+            <li>The item will still be visible but marked as resolved</li>
+            <li>This helps build trust in our community</li>
+        </ul>
+    </div>
+    
+    <form method="post" class="text-center mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Yes, Mark as Claimed</button>
+        <a href="{% url 'item_detail' item.pk %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
