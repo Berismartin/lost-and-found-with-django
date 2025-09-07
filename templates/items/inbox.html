@@ -4,14 +4,14 @@
 
 <div>
     <div class="card-header">
-        <h2>Inbox</h2>
+        <h2 style="font: size 2em;">Inbox {% if unread_count > 0 %}<span class="badge">{{ unread_count }} new</span>{% endif %}</h2>
         <p>View and manage your conversations</p>
     </div>
 </div>
 
 <div class="card-body">
     {% if conversations %}
-    <ul>
+    <ul style="list-style-type: none; padding: 0; text-decoration:none;">
         {% for convo in conversations %}
         <li>
             <a href="{% url 'conversation_detail' convo.id %}">

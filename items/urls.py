@@ -15,10 +15,11 @@ urlpatterns = [
     path('items/<int:pk>/report/', views.report_item, name='report_item'),
     path('my-items/', views.my_items, name='my_items'),
     path('conversations/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
-    path('coversations/<int:conversation_id>/', views.start_conversation, name='start_conversation'),
+    path('conversations/<int:conversation_id>/', views.start_conversation, name='start_conversation'),
+    path('start_conversations/<int:user_id>/', views.start_conversation, name='start_conversation'),
+    path('inbox/', views.inbox_view, name='inbox'),
+    path('inbox/<int:item_id>/', views.inbox_view, name='inbox_with_item'),
     path('conversations/<int:conversation_id>/send_message/', views.send_message, name='send_message'),
-    path('inbox/<int:item_id>', views.inbox_view, name='inbox'),
-    # path("inbox/", views.inbox_list, name="inbox_list"),
 
 
 

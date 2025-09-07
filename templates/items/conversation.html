@@ -4,9 +4,9 @@
 {% block content %}
 
 
-    <h2>Conversation on {{ conversation.item.name }}</h2>
+    <h2>Conversations</h2>
     <div style="border:1px solid #ddd; padding:10px; height:300px; overflow-y:auto; background-color: white; border-radius: 10px;">
-        {% for msg in messages %}
+        {% for msg in chat_messages %}
 
         <p>
             <b>{{ msg.sender.username }}:</b> {{ msg.content }} <small>{{ msg.created_at }}</small>

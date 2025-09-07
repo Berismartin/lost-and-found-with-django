@@ -8,6 +8,7 @@ from django.db import models
 from .models import Item, ItemImage, Report, Comment, Conversation, Message, Notification
 from .forms import ItemForm
 from .forms import CommentForm
+from .forms import MessageForm
 from django.urls import reverse 
 
 from users.models import UserPoints
@@ -266,70 +267,57 @@ def add_reply(request, item_pk, parent_id):
 
 
 
-# @login_required
-# def inbox_view(request,):
-#     conversations = request.user.conversations.all()
-#     return render(request, "items/inbox.html", {"conversations": conversations})
-
-
-
 @login_required
-def inbox_view(request, item_id):
-    item = get_object_or_404(Item, pk=item_id)
-    poster = item.user  # Assuming `user` is the ForeignKey to the poster
+def inbox_view(request):
+    conversations = request.user.conversations.all()
+    unread_count = Message.objects.filter(
+        conversation__in=conversations,
+        is_read=False
+    ).exclude(sender=request.user).count()
+    return render(request, "items/inbox.html", {
+        "conversations": conversations,
+        'unread_count': unread_count,})
 
-    if request.user == poster:
-        return redirect('item_detail', pk=item.pk)
 
-    # Check if a conversation already exists between current user and poster
-    conversation = Conversation.objects.filter(participants=request.user).filter(participants=poster).first()
+    conversations = Conversation.objects.filter(participants=request.user)
+    return render(request, "inbox.html", {"conversations": conversations})
+
     
-    if not conversation:
-        # Create a new conversation
-        conversation = Conversation.objects.create(item=item)
-        conversation.participants.add(request.user, poster)
-        conversation.save()
-
-        Notification.objects.create(
-            user=poster,
-            message=f"{request.user.username} has started a conversation about your item '{item.name}'.",
-            link=reverse('conversation_detail', args=[conversation.id])
-        )
-    
-    return redirect('conversation_detail', conversation_id=conversation.pk)
 
 
 
 @login_required
 def conversation_detail(request, conversation_id):
     conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+    chat_messages = Message.objects.filter(conversation=conversation).order_by("created_at")
+
     if request.user not in conversation.participants.all():
         return redirect('inbox') 
 
-    messages = conversation.messages.all()
+    chat_messages = conversation.messages.all()
     return render(request, 'items/conversation.html', {
         'conversation': conversation,
-        'messages': messages,
+        'chat_messages': chat_messages,
     })
     
 
+
 @login_required
 def send_message(request, conversation_id):
-    if request.method == 'POST':
-        conversation = get_object_or_404(Conversation, id=conversation_id)
-        if request.user not in conversation.participants.all():
-            return redirect('inbox')
-        content = request.POST.get('content')
-        if content:
-            print( "Saving message:", content)  
-            Message.objects.create(
-                conversation=conversation,
-                sender=request.user,
-                content=content
-            )
-        return redirect('conversation_detail', conversation_id=conversation.id)
-    return redirect('inbox')
+    conversation = get_object_or_404(Conversation, id=conversation_id)
 
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.conversation = conversation
+            message.sender = request.user
+            message.save()
+            return redirect('conversation_detail', conversation_id=conversation.id)
+    else:
+        form = MessageForm()
+
+    return render(request, 'send_message.html', {'form': form, 'conversation': conversation})
 
 
 
@@ -338,18 +326,35 @@ def start_conversation(request, user_id):
     other_user = get_object_or_404(User, id=user_id)
 
     if other_user == request.user:
-        return redirect("inbox")  # prevent chatting with yourself
+        return redirect("inbox")
 
-    # check if conversation already exists
-    conversation = Conversation.objects.filter(participants=request.user).filter(participants=other_user).first()
+    # Get the item from the request or context
+    item_id = request.GET.get('item_id')
+    item = get_object_or_404(Item, id=item_id)
+
+    conversation = Conversation.objects.filter(participants=request.user).filter(participants=other_user).filter(item=item).first()
 
     if not conversation:
-        conversation = Conversation.objects.create()
+        conversation = Conversation.objects.create(item=item)
         conversation.participants.add(request.user, other_user)
 
     return redirect("conversation_detail", conversation_id=conversation.id)
 
-# @login_required
-# def inbox_list(request):
-#     conversations = Conversation.objects.filter(participants=request.user)
-#     return render(request, "inbox.html", {"conversations": conversations})
+
+
+
+# def tag_user_notification(comment):
+#     usernames = re.findall(r'@(\w+)', comment.content)
+    
+#     for username in usernames:
+#         try:
+            
+#             tagged_user = User.objects.get(username=username)
+            
+#             if tagged_user != comment.user:
+#                 Notification.objects.create(
+#                     user=tagged_user,
+#                     message=f"You were tagged by {comment.user.username} in a comment on '{comment.item.name}'."
+#                 )
+#         except User.DoesNotExist:
+#             continue

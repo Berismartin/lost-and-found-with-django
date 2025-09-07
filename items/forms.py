@@ -1,6 +1,6 @@
 from django import forms
 from .models import Item, ItemImage
-from .models import Comment
+from .models import Comment, Message
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -114,4 +114,22 @@ class CommentForm(forms.ModelForm):
         }
         labels = {
             "content": ""
+        }
+
+
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Type your message here...',
+                'rows': 4,
+            }),
+        }
+        labels = {
+            'content': '',
         }
