@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Inbox - Lost & Found{% endblock %}
+{% block content %}
+
+<div>
+    <div class="card-header">
+        <h2 style="font: size 2em;">Inbox {% if unread_count > 0 %}<span class="badge">{{ unread_count }} new</span>{% endif %}</h2>
+        <p>View and manage your conversations</p>
+    </div>
+</div>
+
+<div class="card-body">
+    {% if conversations %}
+    <ul style="list-style-type: none; padding: 0; text-decoration:none;">
+        {% for convo in conversations %}
+        <li>
+            <a href="{% url 'conversation_detail' convo.id %}">
+        <!-- Conversation about {{ convo.item.name }} -->
+         Conversation with
+            {% for participant in convo.participants.all %}
+            {% if participant != user %}
+                {{ participant.username }}
+                <!-- {% if not forloop.last %},
+                 {% endif %} -->
+            {% endif %}
+            {% endfor %}
+      </a>
+      <span class="badge bg-secondary">
+        {{ convo.messages.count }} Messages
+      </span>
+    </li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>No conversations yet.</p>
+    {% endif %}
+</div>
+
+</div>
+{% endblock %}
+    

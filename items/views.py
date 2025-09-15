@@ -1,11 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Max
 from django.db import models
-from .models import Item, ItemImage, Report
+from .models import Item, ItemImage, Report, Comment, Conversation, Message, Notification
 from .forms import ItemForm
+from .forms import CommentForm
+from .forms import MessageForm
+from django.urls import reverse 
+
 from users.models import UserPoints
 from django.contrib.auth import get_user_model
 
@@ -86,7 +91,8 @@ def item_detail(request, pk):
         'item': item,
         'is_owner': is_owner,
     }
-    return render(request, 'items/item_detail.html', context)
+    return render(request, 'items/item_detail.html',{"item": item})
+
 
 
 @login_required
@@ -210,4 +216,145 @@ def report_item(request, pk):
             return redirect('item_detail', pk=pk)
         else:
             messages.error(request, 'Please provide a reason for reporting this item.')
-    return render(request, 'items/report_item.html', {'item': item})
+    return render(request, 'items/report_item.html', {'item': item, "form": CommentForm(), "comments": item.comments.filter(parent__isnull=True)})
+
+
+
+@login_required
+def add_comment(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+             Comment.objects.create(
+                item=item,
+                user=request.user,
+                content=content
+            )
+            # tag_user_notification(comment)
+            
+    return redirect('item_detail', pk=item.pk)
+
+
+def item_detail(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    comments = item.comments.filter(parent__isnull=True)  # only top-level comments
+    form = CommentForm()
+    return render(request, "items/item_detail.html", {
+        "item": item,
+        "comments": comments,
+        "form": form,})
+
+
+@login_required
+def add_reply(request, item_pk, parent_id):
+    """
+    Handle posting a reply to a comment.
+    """
+    item = get_object_or_404(Item, pk=item_pk)
+    parent_comment = get_object_or_404(Comment, pk=parent_id,)
+
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            reply = form.save(commit=False)
+            reply.user = request.user
+            reply.item = item
+            reply.parent = parent_comment  # mark this comment as a reply
+            reply.save()
+    
+    return redirect("item_detail", pk=item.pk)
+
+
+
+@login_required
+def inbox_view(request):
+    conversations = request.user.conversations.all()
+    unread_count = Message.objects.filter(
+        conversation__in=conversations,
+        is_read=False
+    ).exclude(sender=request.user).count()
+    return render(request, "items/inbox.html", {
+        "conversations": conversations,
+        'unread_count': unread_count,})
+
+
+    conversations = Conversation.objects.filter(participants=request.user)
+    return render(request, "inbox.html", {"conversations": conversations})
+
+    
+
+
+
+@login_required
+def conversation_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+    chat_messages = Message.objects.filter(conversation=conversation).order_by("created_at")
+
+    if request.user not in conversation.participants.all():
+        return redirect('inbox') 
+
+    chat_messages = conversation.messages.all()
+    return render(request, 'items/conversation.html', {
+        'conversation': conversation,
+        'chat_messages': chat_messages,
+    })
+    
+
+
+@login_required
+def send_message(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.conversation = conversation
+            message.sender = request.user
+            message.save()
+            return redirect('conversation_detail', conversation_id=conversation.id)
+    else:
+        form = MessageForm()
+
+    return render(request, 'send_message.html', {'form': form, 'conversation': conversation})
+
+
+
+@login_required
+def start_conversation(request, user_id):
+    other_user = get_object_or_404(User, id=user_id)
+
+    if other_user == request.user:
+        return redirect("inbox")
+
+    # Get the item from the request or context
+    item_id = request.GET.get('item_id')
+    item = get_object_or_404(Item, id=item_id)
+
+    conversation = Conversation.objects.filter(participants=request.user).filter(participants=other_user).filter(item=item).first()
+
+    if not conversation:
+        conversation = Conversation.objects.create(item=item)
+        conversation.participants.add(request.user, other_user)
+
+    return redirect("conversation_detail", conversation_id=conversation.id)
+
+
+
+
+# def tag_user_notification(comment):
+#     usernames = re.findall(r'@(\w+)', comment.content)
+    
+#     for username in usernames:
+#         try:
+            
+#             tagged_user = User.objects.get(username=username)
+            
+#             if tagged_user != comment.user:
+#                 Notification.objects.create(
+#                     user=tagged_user,
+#                     message=f"You were tagged by {comment.user.username} in a comment on '{comment.item.name}'."
+#                 )
+#         except User.DoesNotExist:
+#             continue

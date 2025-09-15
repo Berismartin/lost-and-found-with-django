@@ -23,9 +23,11 @@
                     <li><a href="{% url 'my_items' %}">My Items</a></li>
                     <li><a href="{% url 'profile_view' %}">Profile</a></li>
                     <li><a href="{% url 'logout_user' %}">Logout</a></li>
+                    <li><a href="{% url 'inbox' %}">Inbox</a></li>
                 {% else %}
                     <li><a href="{% url 'login_user' %}">Login</a></li>
                     <li><a href="{% url 'register_user' %}">Register</a></li>
+
                 {% endif %}
             </ul>
         </nav>
