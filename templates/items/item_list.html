@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Items - Lost & Found{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h1>Browse Lost & Found Items</h1>
+        <p>Search through our community's lost and found items</p>
+    </div>
+    
+    <!-- Search and Filter Form -->
+    <form method="get" class="mb-3">
+        <div class="grid grid-3">
+            <div class="form-group">
+                <label for="search">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Search title, description, location..." 
+                       value="{{ search_query|default:'' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select name="category" id="category" class="form-control">
+                    <option value="">All Categories</option>
+                    {% for value, display in categories %}
+                        <option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>
+                            {{ display }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for value, display in statuses %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                            {{ display }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{% url 'item_list' %}" class="btn btn-secondary">Clear Filters</a>
+        </div>
+    </form>
+</div>
+
+<!-- Results -->
+{% if page_obj %}
+    <div class="mb-3">
+        <p>Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} items</p>
+    </div>
+    
+    <div class="grid grid-3">
+        {% for item in page_obj %}
+        <div class="card">
+            {% if item.main_image %}
+                <img src="{{ item.main_image.url }}" alt="{{ item.title }}" class="card-image">
+            {% else %}
+                <div class="card-image" style="background-color: var(--neutral-gray); display: flex; align-items: center; justify-content: center; color: var(--text-black);">
+                    <span style="font-size: 3rem;">📦</span>
+                </div>
+            {% endif %}
+            
+            <div class="card-header">
+                <h4 class="card-title">{{ item.title }}</h4>
+                <div class="card-meta">
+                    <span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span>
+                    <span>{{ item.get_category_display }}</span>
+                </div>
+            </div>
+            
+            <p>{{ item.description|truncatewords:20 }}</p>
+            
+            {% if item.location_lost_found %}
+                <p><strong>📍</strong> {{ item.location_lost_found }}</p>
+            {% endif %}
+            
+            <div class="card-meta mb-2">
+                <small>Posted {{ item.created_at|timesince }} ago by {{ item.user.first_name }} {{ item.user.last_name }}</small>
+            </div>
+            
+            <a href="{% url 'item_detail' item.pk %}" class="btn btn-primary">View Details</a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+            {% endif %}
+            
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Last &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+{% else %}
+    <div class="card text-center">
+        <h3>No items found</h3>
+        <p>{% if search_query or category_filter or status_filter %}
+            Try adjusting your search criteria.
+           {% else %}
+            No items have been posted yet. Be the first!
+           {% endif %}</p>
+        
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_item' %}" class="btn btn-primary">Post an Item</a>
+        {% else %}
+            <a href="{% url 'register_user' %}" class="btn btn-primary">Register to Post</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

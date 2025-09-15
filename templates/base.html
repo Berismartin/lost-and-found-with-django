@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lost & Found{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <a href="{% url 'home' %}" class="logo">Lost & Found</a>
+            
+            <ul class="nav-links">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'item_list' %}">Browse Items</a></li>
+                
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'create_item' %}">Post Item</a></li>
+                    <li><a href="{% url 'my_items' %}">My Items</a></li>
+                    <li><a href="{% url 'profile_view' %}">Profile</a></li>
+                    <li><a href="{% url 'logout_user' %}">Logout</a></li>
+                    <li><a href="{% url 'inbox' %}">Inbox</a></li>
+                {% else %}
+                    <li><a href="{% url 'login_user' %}">Login</a></li>
+                    <li><a href="{% url 'register_user' %}">Register</a></li>
+
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Content -->
+        <div class="main-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Lost & Found. Helping people reunite with their belongings.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

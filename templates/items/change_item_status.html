@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Change Status for: {{ item.title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="status">Status:</label>
+      <select name="status" id="status" class="form-control" required>
+        {% for value, label in item.STATUS_CHOICES %}
+          <option value="{{ value }}" {% if item.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if is_owner and item.status != 'returned_to_owner' %}
+      <div class="alert alert-info mt-2">As the owner, you may confirm this item was returned to you.</div>
+      <input type="hidden" name="confirmed_by_owner" value="true" />
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary mt-2">Change Status</button>
+    <a href="{% url 'item_detail' item.pk %}" class="btn btn-secondary mt-2">Cancel</a>
+  </form>
+</div>
+{% endblock %}
