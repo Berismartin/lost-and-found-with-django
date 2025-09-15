@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Your App</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* Custom notification styles */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: color 0.2s ease;
+        }
+        
+        .notification-bell:hover {
+            color: #007bff;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        .notification-badge.hidden {
+            display: none;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .notification-dropdown {
+            width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 12px;
+        }
+        
+        .notification-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            margin: 0;
+        }
+        
+        .notification-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .notification-item.unread {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .notification-item.unread:hover {
+            background-color: #ffeaa7;
+        }
+        
+        .notification-content {
+            font-size: 14px;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #212529;
+        }
+        
+        .notification-message {
+            color: #6c757d;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .notification-time {
+            font-size: 12px;
+            color: #adb5bd;
+        }
+        
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .notification-icon.info { background: #e3f2fd; color: #1976d2; }
+        .notification-icon.success { background: #e8f5e8; color: #388e3c; }
+        .notification-icon.warning { background: #fff3e0; color: #f57c00; }
+        .notification-icon.error { background: #ffebee; color: #d32f2f; }
+        
+        .notification-actions {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .notification-loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .notification-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .notification-empty i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                width: 320px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                width: 100vw;
+                max-width: 340px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-cube me-2"></i>Your App
+            </a>
+            
+            <!-- Mobile toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navigation items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    {% block nav_items %}{% endblock %}
+                </ul>
+                
+                <!-- Right side navigation -->
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <!-- Notification Bell -->
+                        <li class="nav-item dropdown me-3">
+                            <div class="notification-bell" 
+                                 id="notificationBell" 
+                                 data-bs-toggle="dropdown" 
+                                 aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge hidden" id="notificationBadge">0</span>
+                            </div>
+                            
+                            <!-- Notification Dropdown -->
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown" 
+                                 id="notificationDropdown">
+                                <div class="notification-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-bell me-2"></i>Notifications
+                                    </h6>
+                                    <button class="btn btn-sm btn-outline-light" 
+                                            id="markAllReadBtn" 
+                                            style="font-size: 12px;">
+                                        Mark all read
+                                    </button>
+                                </div>
+                                
+                                <div id="notificationContent">
+                                    <div class="notification-loading">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <div class="mt-2">Loading notifications...</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-actions">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="/notifications/" class="btn btn-sm btn-outline-primary">
+                                            View All
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary" id="refreshNotifications">
+                                            <i class="fas fa-sync-alt"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        
+                        <!-- User Menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" 
+                               href="#" 
+                               data-bs-toggle="dropdown">
+                                <div class="bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                {{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/profile/">
+                                    <i class="fas fa-user-circle me-2"></i>Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="/settings/">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/logout/">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login/">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/register/">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="{% block main_class %}container my-4{% endblock %}">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4 border-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">© 2024 Your App. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/privacy/" class="text-muted me-3">Privacy Policy</a>
+                    <a href="/terms/" class="text-muted me-3">Terms of Service</a>
+                    <a href="/contact/" class="text-muted">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    
+    <!-- Notification JavaScript -->
+    <script>
+        class NotificationManager {
+            constructor() {
+                this.isDropdownOpen = false;
+                this.notifications = [];
+                this.unreadCount = 0;
+                this.init();
+            }
+            
+            init() {
+                // Bind events
+                $('#notificationBell').on('click', () => this.toggleDropdown());
+                $('#markAllReadBtn').on('click', () => this.markAllAsRead());
+                $('#refreshNotifications').on('click', () => this.loadNotifications());
+                
+                // Load initial notifications
+                this.loadNotifications();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(() => this.loadNotifications(false), 30000);
+            }
+            
+            toggleDropdown() {
+                if (!this.isDropdownOpen) {
+                    this.loadNotifications(true);
+                }
+                this.isDropdownOpen = !this.isDropdownOpen;
+            }
+            
+            loadNotifications(showLoading = true) {
+                if (showLoading) {
+                    $('#notificationContent').html(`
+                        <div class="notification-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div class="mt-2">Loading notifications...</div>
+                        </div>
+                    `);
+                }
+                
+                $.ajax({
+                    url: '/api/notifications/',
+                    method: 'GET',
+                    data: {
+                        page: 1,
+                        limit: 10,
+                        unread_only: false
+                    },
+                    success: (response) => this.handleNotificationsResponse(response),
+                    error: (xhr) => this.handleError(xhr)
+                });
+            }
+            
+            handleNotificationsResponse(response) {
+                if (response.success) {
+                    this.notifications = response.notifications;
+                    this.unreadCount = response.metadata.unread_count;
+                    this.updateBadge();
+                    this.renderNotifications();
+                } else {
+                    this.handleError();
+                }
+            }
+            
+            handleError(xhr = null) {
+                const errorMsg = xhr && xhr.responseJSON ? 
+                    xhr.responseJSON.message : 'Failed to load notifications';
+                    
+                $('#notificationContent').html(`
+                    <div class="notification-empty">
+                        <i class="fas fa-exclamation-circle text-danger"></i>
+                        <div>${errorMsg}</div>
+                    </div>
+                `);
+            }
+            
+            renderNotifications() {
+                if (this.notifications.length === 0) {
+                    $('#notificationContent').html(`
+                        <div class="notification-empty">
+                            <i class="fas fa-bell-slash"></i>
+                            <div>No notifications yet</div>
+                            <small>You're all caught up!</small>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                let html = '';
+                this.notifications.forEach(notification => {
+                    html += this.renderNotificationItem(notification);
+                });
+                
+                $('#notificationContent').html(html);
+                
+                // Bind click events to notification items
+                $('.notification-item').on('click', (e) => {
+                    const notificationId = $(e.currentTarget).data('id');
+                    this.handleNotificationClick(notificationId);
+                });
+            }
+            
+            renderNotificationItem(notification) {
+                const timeAgo = this.getTimeAgo(notification.created_at);
+                const unreadClass = notification.is_read ? '' : 'unread';
+                
+                return `
+                    <div class="notification-item ${unreadClass}" data-id="${notification.id}">
+                        <div class="d-flex">
+                            <div class="notification-icon ${notification.type}">
+                                <i class="fas fa-${this.getIconClass(notification.type)}"></i>
+                            </div>
+                            <div class="notification-content flex-grow-1">
+                                <div class="notification-title">${notification.title}</div>
+                                <div class="notification-message">${notification.message}</div>
+                                <div class="notification-time">
+                                    <i class="fas fa-clock me-1"></i>${timeAgo}
+                                </div>
+                            </div>
+                            ${!notification.is_read ? '<div class="text-primary"><i class="fas fa-circle" style="font-size: 8px;"></i></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            getIconClass(type) {
+                const icons = {
+                    'info': 'info-circle',
+                    'success': 'check-circle',
+                    'warning': 'exclamation-triangle',
+                    'error': 'exclamation-circle',
+                    'message': 'envelope',
+                    'system': 'cog'
+                };
+                return icons[type] || 'bell';
+            }
+            
+            getTimeAgo(timestamp) {
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = Math.floor((now - time) / 1000);
+                
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+                if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+                return time.toLocaleDateString();
+            }
+            
+            updateBadge() {
+                const badge = $('#notificationBadge');
+                if (this.unreadCount > 0) {
+                    badge.removeClass('hidden').text(this.unreadCount > 99 ? '99+' : this.unreadCount);
+                } else {
+                    badge.addClass('hidden');
+                }
+            }
+            
+            handleNotificationClick(notificationId) {
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (!notification) return;
+                
+                // Mark as read if unread
+                if (!notification.is_read) {
+                    this.markAsRead([notificationId]);
+                }
+                
+                // Navigate to action URL if exists
+                if (notification.action_url) {
+                    window.location.href = notification.action_url;
+                }
+            }
+            
+            markAsRead(notificationIds) {
+                $.ajax({
+                    url: '/api/notifications/',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    data: JSON.stringify({
+                        action: 'mark_read',
+                        notification_ids: notificationIds
+                    }),
+                    success: (response) => {
+                        if (response.success) {
+                            this.unreadCount = response.unread_count;
+                            this.updateBadge();
+                            this.loadNotifications(false);
+                        }
+                    }
+                });
+            }
+            
+            markAllAsRead() {
+                const unreadIds = this.notifications
+                    .filter(n => !n.is_read)
+                    .map(n => n.id);
+                
+                if (unreadIds.length > 0) {
+                    this.markAsRead(unreadIds);
+                }
+            }
+            
+            getCSRFToken() {
+                return $('[name=csrfmiddlewaretoken]').val() || 
+                       $('meta[name=csrf-token]').attr('content') || '';
+            }
+        }
+        
+        // Initialize notification manager when document is ready
+        $(document).ready(() => {
+            {% if user.is_authenticated %}
+                window.notificationManager = new NotificationManager();
+            {% endif %}
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
