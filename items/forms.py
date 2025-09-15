@@ -1,5 +1,6 @@
 from django import forms
 from .models import Item, ItemImage
+from .models import Comment, Message
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -96,3 +97,39 @@ class ItemForm(forms.ModelForm):
         self.fields['category'].help_text = "Select the category that best describes your item"
         self.fields['status'].help_text = "Is this item lost or found?"
         self.fields['image'].help_text = "Upload the main photo of the item (optional but recommended)"
+
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ["content"]  # Only need the text of the comment
+        widgets = {
+            "content": forms.Textarea(attrs={
+                "placeholder": "Write a comment...",
+                "rows": 1,
+                # "cols": 40,
+                "class": "form-control"
+            }),
+        }
+        labels = {
+            "content": ""
+        }
+
+
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Type your message here...',
+                'rows': 4,
+            }),
+        }
+        labels = {
+            'content': '',
+        }

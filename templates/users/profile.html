@@ -21,8 +21,11 @@
             
             <h3>{{ user.username }}</h3>
             <p class="text-muted">{{ user.email }}</p>
-            
+            {% if request.user == user %}
             <a href="{% url 'edit_profile' %}" class="btn btn-primary mt-2">Edit Profile</a>
+            {%else%}
+            <a href="{% url 'start_conversation' user.id %}" class="btn btn-primary mt-2">Message{{user.username}}</a>
+            {% endif %}
         </div>
         
         <!-- Profile Details -->

@@ -102,6 +102,10 @@
                     <a href="{% url 'change_item_status' item.pk %}" class="btn" style="background: #0A2342; color: #fff;">Change Status</a>
                 {% endif %}
                 <a href="{% url 'report_item' item.pk %}" class="btn" style="background: #FF9F1C; color: #171717;">Report</a>
+                {% if request.user != item.user %}
+                <a href="{% url 'start_conversation' item.user.id%}?item_id={{ item.id}}" class="btn" style="background: #022775; color: #fff;">Message Poster</a>
+                {% endif %}
+               
             </div>
 
 
@@ -122,6 +126,111 @@
         </div>
     </div>
 </div>
+
+
+
+<!-- Comment Section -->
+<div class="comment-section" style=" margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: white;">
+    <h3 style="color: var(--primary-blue);">Comments</h3>
+    <form method="post" action="{%url 'add_comment' item.pk%}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" id="postBtn" style="display:none; background:#065fd4; color:white; border:none; padding:6px 12px; border-radius:4px;">Comment</button>
+    </form>
+
+         
+          <!-- display comments and replies -->
+        {% for comment in comments %}
+        <div class="comment" style="margin-bottom: 15px;">
+          <!-- comment content -->
+           <p>
+            <strong>{{ comment.user.username }}:<span style="font-weight: lighter;">{{ comment.content }}</span></strong> 
+            {% if comment.id%} — <span style="font-size: small;">{{ comment.created_at|date:"M d, Y H:i" }}</span>{%endif%}
+            <button class="toggle-reply-btn" data-comment-id="{{ comment.id }}" style="background:none; border:none; color:#065fd4; cursor:pointer; padding:0;">Reply</button>
+            <form method="post" action="{% url 'add_reply' item.pk comment.id %}" class="reply-form" id="reply-form-{{ comment.id }}" style="display:none; margin-top:5px;" >
+                {% csrf_token %}
+                <input type="text" name="content" placeholder="Reply..." required>
+                <button type="submit" style="background-color: #065fd4; color: white; border: none;">Reply</button>
+            </form>
+           </p>
+           
+            
+            
+            <!-- display replies -->
+            {% if comment.replies.exists %}
+            <button class="toggle-replies-btn" data-comment-id="{{ comment.id }}" style="background:none; border:none; color:#065fd4; cursor:pointer; padding:0; margin-top:5px;">
+                View Replies ({{ comment.replies.count }})
+            </button>
+
+            <div class="replies" id="replies-{{ comment.id }}" style="margin-left: 20px; margin-top: 10px;">
+                
+                {% for reply in comment.replies.all %}
+                  <p><strong>{{ reply.user.username }}: <span style="font-weight: lighter;">{{ reply.content }}</span></strong> — <span style="font-size: small;">{{ reply.created_at|date:"M d, Y H:i" }}</span></p>
+             
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+             
+        {% empty %}
+              <p>No comments yet. Be the first!</p>
+        {% endfor %}
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const textarea = document.querySelector("#id_content");
+    const postBtn = document.querySelector("#postBtn");
+
+
+    if (textarea && postBtn) {
+        textarea.addEventListener("input", function () {
+            postBtn.style.display = this.value.trim().length > 0 ? "inline-block" : "none";
+        });
+    }
+
+    const replyButtons = document.querySelectorAll(".toggle-reply-btn");
+
+    replyButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const commentId = this.getAttribute("data-comment-id");
+            const Form = document.getElementById(`reply-form-${commentId}`);
+            if (Form.style.display === "none") {
+                Form.style.display = "block";
+                Form.querySelector("input[name='content']").focus();
+            } else {
+                Form.style.display = "none";
+            }
+        });
+        const Form = document.getElementById(`reply-form-${button.getAttribute("data-comment-id")}`);
+        Form.addEventListener("submit", function () {
+            Form.style.display = "none";
+        });
+
+
+        
+    });
+
+    const toggleRepliesBtns = document.querySelectorAll(".toggle-replies-btn");
+    toggleRepliesBtns.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const commentId = this.dataset.commentId;
+            const replies = document.getElementById(`replies-${commentId}`);
+            if(replies.style.display === "none") {
+                replies.style.display = "block";
+                this.textContent = "Hide Replies";
+            } else {
+                replies.style.display = "none";
+                this.textContent = "View Replies";
+            }
+        });
+
+    });
+
+});
+</script>
 
 
 <!-- Navigation -->

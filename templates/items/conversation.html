@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Conversation on {{ conversation.item.name }} - Lost & Found{% endblock %}
+
+{% block content %}
+
+
+    <h2>Conversations</h2>
+    <div style="border:1px solid #ddd; padding:10px; height:300px; overflow-y:auto; background-color: white; border-radius: 10px;">
+        {% for msg in chat_messages %}
+
+        <p>
+            <b>{{ msg.sender.username }}:</b> {{ msg.content }} <small>{{ msg.created_at }}</small>
+            <span style="font-size: small; color: gray">{% load tz %}
+                {% localtime on %}{{ msg.created_at|date:"M d, Y H:i" }}{% endlocaltime %}</span>
+        </p>
+        {%endfor%}
+    </div>
+       
+
+
+ <form method="POST" action="{% url 'send_message' conversation.id %}">
+  {% csrf_token %}
+  <input type="text" name="content" placeholder="Type a message..." required>
+
+  <button type="submit" class="btn btn-primary" >Send</button>
+ </form>
+
+{%endblock %}
+
+
+    
+
