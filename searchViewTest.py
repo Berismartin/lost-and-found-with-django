@@ -1,4 +1,3 @@
-from django.test import TestCase
 # tests/test_search_view.py
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -618,5 +617,3 @@ class SearchViewUnitTests(TestCase):
         # Test with empty query
         suggestions_empty = self.view._get_suggested_searches('')
         self.assertEqual(suggestions_empty, [])
-
-# Create your tests here.
