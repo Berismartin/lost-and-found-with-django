@@ -161,3 +161,29 @@ Potential features for future development:
 ---
 
 This application successfully implements all the requirements from the original task specification, providing a complete lost and found management system with user authentication, item management, and a professional user interface.
+
+## Testing
+
+Activate the virtual environment and run tests:
+
+```bash
+source venv/bin/activate
+python manage.py test -v 2
+```
+
+### Naming Convention for Tests
+
+We follow a given_when_then_it style for test names to make intent explicit and regressions obvious:
+
+- given_<precondition>_when_<action>_then_<outcome>_it_<extra_assertion>
+
+Examples:
+
+- `test_given_anonymous_user_when_open_create_item_then_redirects_to_login_it_blocks_unauthenticated`
+- `test_given_valid_registration_when_submit_form_then_profile_created_it_logs_user_in`
+
+Run a specific test:
+
+```bash
+python manage.py test items.tests.TestItemViewsGivenWhenThen.test_given_owner_when_change_status_to_found_then_value_updates_it_returns_success -v 2
+```
