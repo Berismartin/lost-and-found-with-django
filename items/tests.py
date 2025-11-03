@@ -48,6 +48,8 @@ class TestItemViewsGivenWhenThen(TestCase):
         resp = self.client.get(reverse("create_item"))
         self.assertEqual(resp.status_code, 302)
 
+
+##################
     def test_given_logged_in_owner_when_create_and_add_additional_images_then_images_persist_it_orders_sequentially(self):
         self.client.login(username="owner", password="pass")
         # create minimal item first
@@ -97,6 +99,7 @@ class TestItemViewsGivenWhenThen(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(Item.objects.filter(pk=self.item.pk).exists())
 
+#######
     def test_given_filters_when_browse_item_list_then_results_match_it_applies_search_category_status(self):
         Item.objects.create(title="Keys", description="car keys", category="keys", status="found", user=self.owner)
         # search
