@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard · Lost & Found{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --dash-bg:#f4f6fb;
+    --dash-card-bg:#ffffff;
+    --dash-border:#e5eaf2;
+    --dash-muted:#6b7280;
+    --dash-heading:#111827;
+    --dash-accent:#2563eb;
+  }
+  body{background:var(--dash-bg);}
+  .dashboard-wrapper{max-width:1180px;margin:0 auto;}
+  .dashboard-hero{display:flex;flex-direction:column;gap:12px;padding:24px 0;}
+  .dashboard-hero h1{margin:0;font-size:32px;font-weight:700;color:var(--dash-heading);}
+  .dashboard-hero p{margin:0;color:var(--dash-muted);}
+  .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:24px;}
+  .metric-card{background:var(--dash-card-bg);border:1px solid var(--dash-border);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(15,23,42,0.06);}
+  .metric-label{color:var(--dash-muted);font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+  .metric-value{font-size:30px;font-weight:700;color:var(--dash-heading);}
+  .metric-sub{color:var(--dash-muted);font-size:13px;margin-top:4px;}
+
+  .flex-sections{display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:24px;margin-bottom:28px;}
+  @media(max-width:980px){.flex-sections{grid-template-columns:1fr;}}
+  .summary-card{background:var(--dash-card-bg);border:1px solid var(--dash-border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;box-shadow:0 2px 8px rgba(15,23,42,0.06);}
+  .summary-card h3{margin:0;font-size:18px;color:var(--dash-heading);}
+  .status-list,.category-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;}
+  .status-item,.category-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px dashed var(--dash-border);border-radius:10px;}
+  .status-label,.category-label{font-weight:600;color:var(--dash-heading);}
+  .status-count,.category-count{font-size:18px;font-weight:700;color:var(--dash-accent);}
+
+  .charts-section{background:var(--dash-card-bg);border:1px solid var(--dash-border);border-radius:12px;padding:20px 22px;box-shadow:0 2px 10px rgba(15,23,42,0.06);}
+  .charts-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .charts-header h3{margin:0;font-size:18px;color:var(--dash-heading);}
+  .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;}
+  @media(max-width:1024px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-card{position:relative;height:320px;}
+  .chart-card canvas{position:absolute;inset:0;width:100%!important;height:100%!important;background:#fff;border-radius:12px;border:1px solid var(--dash-border);padding:18px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <section class="dashboard-hero">
+    <h1>Insights Dashboard</h1>
+    <p>Track lost, found, and returned items alongside community engagement.</p>
+  </section>
+
+  <section class="metrics-grid">
+    <article class="metric-card">
+      <div class="metric-label">Total Items</div>
+      <div class="metric-value">{{ total_items }}</div>
+      <div class="metric-sub">Historical count of every listing.</div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-label">Active Listings</div>
+      <div class="metric-value">{{ active_items }}</div>
+      <div class="metric-sub">Currently visible lost or found items.</div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-label">Community Comments</div>
+      <div class="metric-value">{{ total_comments }}</div>
+      <div class="metric-sub">Conversations around items.</div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-label">Reputation Points</div>
+      <div class="metric-value">{{ user_points }}</div>
+      <div class="metric-sub">Earned from successful returns.</div>
+    </article>
+  </section>
+
+  <section class="flex-sections">
+    <aside class="summary-card">
+      <h3>Item Status Breakdown</h3>
+      <ul class="status-list">
+        {% for status in status_summary %}
+          <li class="status-item">
+            <span class="status-label">{{ status.label }}</span>
+            <span class="status-count">{{ status.count }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </aside>
+
+    <aside class="summary-card">
+      <h3>Category Distribution</h3>
+      <ul class="category-list">
+        {% for category in category_summary %}
+          <li class="category-item">
+            <span class="category-label">{{ category.label }}</span>
+            <span class="category-count">{{ category.count }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </aside>
+  </section>
+
+  <section class="charts-section">
+    <header class="charts-header">
+      <h3>Visual Analytics</h3>
+      <span class="metric-sub">Interactive charts summarizing platform activity.</span>
+    </header>
+
+    <div class="charts-grid">
+      <div class="chart-card"><canvas id="statusDonut"></canvas></div>
+      <div class="chart-card"><canvas id="categoryPie"></canvas></div>
+      <div class="chart-card"><canvas id="itemsLine"></canvas></div>
+      <div class="chart-card"><canvas id="categoryBar"></canvas></div>
+      <div class="chart-card"><canvas id="statusScatter"></canvas></div>
+      <div class="chart-card"><canvas id="resolutionHistogram"></canvas></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ status_chart|json_script:"status-chart-data" }}
+{{ category_chart|json_script:"category-chart-data" }}
+{{ monthly_chart|json_script:"monthly-chart-data" }}
+{{ scatter_chart|json_script:"scatter-chart-data" }}
+{{ status_labels_map|json_script:"status-label-map" }}
+{{ majority_timeline|json_script:"majority-timeline-data" }}
+{{ histogram_data|json_script:"histogram-data" }}
+
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+  (function () {
+    const parseScript = (id, fallback) => {
+      const el = document.getElementById(id);
+      if (!el) { return fallback; }
+      try {
+        return JSON.parse(el.textContent);
+      } catch (err) {
+        console.error('Failed to parse JSON for', id, err);
+        return fallback;
+      }
+    };
+    const datasetOrEmpty = (id) => {
+      const parsed = parseScript(id, { labels: [], data: [] });
+      return {
+        labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+        data: Array.isArray(parsed.data) ? parsed.data.map(v => Number(v) || 0) : [],
+      };
+    };
+
+    const renderCharts = () => {
+      if (typeof window.Chart === 'undefined') {
+        console.warn('Chart.js failed to load.');
+        document.querySelectorAll('.chart-card').forEach((card) => {
+          card.innerHTML = '<div style=\"display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;\">Chart unavailable</div>';
+        });
+        return;
+      }
+
+      const palette = ['#2563eb','#16a34a','#f97316','#facc15','#ec4899','#8b5cf6','#0ea5e9','#22c55e','#f43f5e','#6366f1','#0ea5e9','#38bdf8'];
+      const borderPalette = ['#1d4ed8','#15803d','#ea580c','#ca8a04','#db2777','#7c3aed','#0284c7','#16a34a','#e11d48','#4f46e5','#0369a1','#0ea5e9'];
+      const pick = (arr, count) => arr.slice(0, Math.max(count, 1));
+      const ctxOptions = { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false };
+
+      const statusData = datasetOrEmpty('status-chart-data');
+      const categoryData = datasetOrEmpty('category-chart-data');
+      const monthlyData = datasetOrEmpty('monthly-chart-data');
+      const scatterData = parseScript('scatter-chart-data', {});
+      const statusLabelMap = parseScript('status-label-map', {});
+      const majorityTimeline = parseScript('majority-timeline-data', []);
+      const histogramData = parseScript('histogram-data', []);
+      const statusKeys = Object.keys(statusLabelMap);
+      const formatStatus = (status) => statusLabelMap[status] || status.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+
+      const hasValues = (arr) => Array.isArray(arr) && arr.length > 0;
+
+      const donutCanvas = document.getElementById('statusDonut');
+      if (donutCanvas) {
+        if (!hasValues(statusData.labels)) {
+          donutCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No status data yet</div>';
+        } else {
+        new Chart(donutCanvas.getContext('2d'), {
+          type: 'doughnut',
+          data: { labels: statusData.labels, datasets: [{ data: statusData.data, backgroundColor: pick(palette, statusData.data.length), borderColor: pick(borderPalette, statusData.data.length), borderWidth: 1 }] },
+          options: ctxOptions,
+        });
+        }
+      }
+
+      const pieCanvas = document.getElementById('categoryPie');
+      if (pieCanvas) {
+        if (!hasValues(categoryData.labels)) {
+          pieCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No category data yet</div>';
+        } else {
+        new Chart(pieCanvas.getContext('2d'), {
+          type: 'pie',
+          data: { labels: categoryData.labels, datasets: [{ data: categoryData.data, backgroundColor: pick(palette, categoryData.data.length), borderColor: pick(borderPalette, categoryData.data.length), borderWidth: 1 }] },
+          options: ctxOptions,
+        });
+        }
+      }
+
+      const lineCanvas = document.getElementById('itemsLine');
+      if (lineCanvas) {
+        if (!hasValues(monthlyData.labels)) {
+          lineCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No monthly trends yet</div>';
+        } else {
+        new Chart(lineCanvas.getContext('2d'), {
+          type: 'line',
+          data: { labels: monthlyData.labels, datasets: [{ label: 'Items created', data: monthlyData.data, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.18)', fill: true, tension: 0.35, pointRadius: 4, pointHoverRadius: 5, pointBackgroundColor: '#4f46e5', pointBorderWidth: 0 }] },
+          options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } }, maintainAspectRatio: false },
+        });
+        }
+      }
+
+      const barCanvas = document.getElementById('categoryBar');
+      if (barCanvas) {
+        if (!hasValues(categoryData.labels)) {
+          barCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No category totals yet</div>';
+        } else {
+        new Chart(barCanvas.getContext('2d'), {
+          type: 'bar',
+          data: { labels: categoryData.labels, datasets: [{ label: 'Items by category', data: categoryData.data, backgroundColor: 'rgba(34,197,94,0.7)', borderColor: '#16a34a', borderWidth: 1.2, borderRadius: 6, maxBarThickness: 40 }] },
+          options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } }, maintainAspectRatio: false },
+        });
+        }
+      }
+
+      const scatterCanvas = document.getElementById('statusScatter');
+      if (scatterCanvas) {
+        const statusPositions = {};
+        statusKeys.forEach((status, idx) => {
+          statusPositions[status] = idx + 1;
+        });
+        const pointDatasets = statusKeys.map((status, idx) => {
+          const items = Array.isArray(scatterData?.[status]) ? scatterData[status] : [];
+          return {
+            label: formatStatus(status),
+            data: items.map(item => ({
+              x: item.date,
+              y: statusPositions[status],
+              meta: item,
+            })),
+            backgroundColor: palette[idx % palette.length],
+            borderColor: palette[idx % palette.length],
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          };
+        });
+        const majorityData = Array.isArray(majorityTimeline)
+          ? majorityTimeline.map(entry => ({
+              x: entry.date,
+              y: statusPositions[entry.status] || null,
+              counts: entry.counts || {},
+            }))
+          : [];
+        const hasPoints = pointDatasets.some(ds => Array.isArray(ds.data) && ds.data.length > 0);
+        if (!hasPoints) {
+          scatterCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No timeline data yet</div>';
+        } else {
+          const yTickMap = Object.entries(statusPositions).reduce((acc, [status, pos]) => {
+            acc[pos] = formatStatus(status);
+            return acc;
+          }, {});
+          new Chart(scatterCanvas.getContext('2d'), {
+            type: 'scatter',
+            data: {
+              datasets: [
+                ...pointDatasets,
+                {
+                  type: 'line',
+                  label: 'Daily majority',
+                  data: majorityData,
+                  borderColor: '#1f2937',
+                  backgroundColor: '#1f2937',
+                  pointRadius: 0,
+                  pointHoverRadius: 0,
+                  borderWidth: 2,
+                  spanGaps: true,
+                },
+              ],
+            },
+            options: {
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const datasetLabel = context.dataset.label || '';
+                      const date = context.parsed.x ? new Date(context.parsed.x).toLocaleDateString() : '';
+                      if (context.dataset.type === 'line') {
+                        const counts = context.raw?.counts || {};
+                        const summary = Object.entries(counts)
+                          .map(([status, count]) => `${formatStatus(status)}: ${count}`)
+                          .join(', ');
+                        return `${datasetLabel}: ${date}${summary ? ` (${summary})` : ''}`;
+                      }
+                      const meta = context.raw?.meta || {};
+                      const title = meta.title ? ` • ${meta.title}` : '';
+                      const category = meta.category ? ` [${meta.category}]` : '';
+                      return `${datasetLabel}: ${date}${title}${category}`;
+                    },
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  type: 'time',
+                  time: { tooltipFormat: 'PPP', unit: 'month', displayFormats: { month: 'MMM yy', day: 'MMM dd' } },
+                  title: { display: true, text: 'Date created' },
+                  ticks: { maxRotation: 0 },
+                },
+                y: {
+                  min: 0,
+                  max: statusKeys.length + 1,
+                  ticks: {
+                    stepSize: 1,
+                    callback: (value) => yTickMap[value] || '',
+                  },
+                  title: { display: true, text: 'Status' },
+                },
+              },
+            },
+          });
+        }
+      }
+
+      const histogramCanvas = document.getElementById('resolutionHistogram');
+      if (histogramCanvas) {
+        const buckets = histogramData.map(item => item.bucket);
+        const values = histogramData.map(item => item.count);
+        if (values.every(v => v === 0)) {
+          histogramCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px;">No resolution data yet</div>';
+        } else {
+          new Chart(histogramCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: buckets,
+              datasets: [{
+                label: 'Items resolved',
+                data: values,
+                backgroundColor: 'rgba(99,102,241,0.75)',
+                borderColor: '#6366f1',
+                borderRadius: 6,
+              }],
+            },
+            options: {
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true },
+              },
+            },
+          });
+        }
+      }
+
+    };
+
+    window.addEventListener('load', renderCharts);
+  })();
+</script>
+{% endblock %}
+
+

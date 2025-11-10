@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -10,6 +12,8 @@ from .forms import ItemForm
 from .forms import CommentForm
 from .forms import MessageForm
 from django.urls import reverse 
+from django.utils import timezone
+from django.db.models.functions import TruncMonth
 
 from users.models import UserPoints
 from django.contrib.auth import get_user_model
@@ -20,6 +24,166 @@ def home(request):
     """Home page view displaying recent items"""
     recent_items = Item.objects.filter(is_active=True).order_by('-created_at')[:6]
     return render(request, 'items/home.html', {'recent_items': recent_items})
+
+
+@login_required
+def dashboard(request):
+    """Dashboard with counts, statistics, and visualizations for the current user."""
+    # Scope: overall + user-specific quick stats
+    now = timezone.now()
+    start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Global counts
+    total_items = Item.objects.count()
+    active_items = Item.objects.filter(is_active=True).count()
+    status_counts = Item.objects.values('status').order_by().annotate(count=models.Count('id'))
+    status_map = {s: 0 for s, _ in Item.STATUS_CHOICES}
+    for row in status_counts:
+        status_map[row['status']] = row['count']
+
+    # Category distribution
+    category_counts = Item.objects.values('category').order_by().annotate(count=models.Count('id'))
+    category_map = {c: 0 for c, _ in Item.CATEGORY_CHOICES}
+    for row in category_counts:
+        category_map[row['category']] = row['count']
+
+    # Items created per month this year
+    monthly_items_qs = (
+        Item.objects.filter(created_at__gte=start_of_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .order_by('month')
+        .annotate(count=models.Count('id'))
+    )
+    monthly_labels = [row['month'].strftime('%b %Y') for row in monthly_items_qs]
+    monthly_counts = [row['count'] for row in monthly_items_qs]
+
+    # Reports
+    total_reports = Report.objects.count()
+    unresolved_reports = Report.objects.filter(resolved=False).count()
+
+    # Comments
+    total_comments = Comment.objects.count()
+
+    # Messaging quick stats for user
+    user_conversations = request.user.conversations.all()
+    unread_messages = Message.objects.filter(conversation__in=user_conversations, is_read=False).exclude(sender=request.user).count()
+
+    # User points
+    user_points = 0
+    try:
+        user_points = request.user.points.points
+    except Exception:
+        user_points = 0
+
+    status_labels = [label for _, label in Item.STATUS_CHOICES]
+    status_keys = [key for key, _ in Item.STATUS_CHOICES]
+    category_labels = [label for _, label in Item.CATEGORY_CHOICES]
+    category_keys = [key for key, _ in Item.CATEGORY_CHOICES]
+
+    status_chart = {
+        'labels': status_labels,
+        'data': [status_map[key] for key in status_keys],
+    }
+    category_chart = {
+        'labels': category_labels,
+        'data': [category_map[key] for key in category_keys],
+    }
+    monthly_chart = {
+        'labels': monthly_labels,
+        'data': monthly_counts,
+    }
+    # Scatter data of item creation dates grouped by status
+    scatter_entries = (
+        Item.objects.filter(created_at__isnull=False)
+        .values('id', 'title', 'status', 'created_at', 'category')
+        .order_by('created_at')
+    )
+    scatter_chart: dict[str, list[dict[str, str]]] = {}
+    daily_counts: dict[str, dict[str, int]] = {}
+    for entry in scatter_entries:
+        created_date = entry['created_at']
+        if created_date is None:
+            continue
+        date_key = created_date.strftime('%Y-%m-%d')
+        status_key = entry['status']
+        scatter_chart.setdefault(status_key, []).append({
+            'date': date_key,
+            'title': entry['title'],
+            'category': entry['category'],
+            'id': entry['id'],
+        })
+        day_bucket = daily_counts.setdefault(date_key, {})
+        day_bucket[status_key] = day_bucket.get(status_key, 0) + 1
+
+    majority_timeline = []
+    for date_key in sorted(daily_counts.keys()):
+        counts = daily_counts[date_key]
+        if counts:
+            dominant_status = max(counts.items(), key=lambda item: item[1])[0]
+            majority_timeline.append({
+                'date': date_key,
+                'status': dominant_status,
+                'counts': counts,
+            })
+
+    status_summary = [
+        {'label': label, 'count': status_map[key]}
+        for key, label in Item.STATUS_CHOICES
+    ]
+    category_summary = [
+        {'label': label, 'count': category_map[key]}
+        for key, label in Item.CATEGORY_CHOICES
+    ]
+
+    status_labels_map = dict(Item.STATUS_CHOICES)
+    category_labels_map = dict(Item.CATEGORY_CHOICES)
+
+    # Histogram data for time to resolution (in days) for returned items
+    histogram_buckets = [
+        (0, 1, "≤1 day"),
+        (1, 3, "1-3 days"),
+        (3, 7, "3-7 days"),
+        (7, 14, "1-2 weeks"),
+        (14, 30, "2-4 weeks"),
+        (30, None, "≥1 month"),
+    ]
+    resolution_counts = {label: 0 for _, _, label in histogram_buckets}
+    returned_items = Item.objects.filter(status='returned_to_owner')
+    for item in returned_items:
+        delta = item.updated_at - item.created_at
+        days = delta.total_seconds() / 86400 if delta else 0
+        for start, end, label in histogram_buckets:
+            if end is None and days >= start:
+                resolution_counts[label] += 1
+                break
+            if end is not None and start <= days < end:
+                resolution_counts[label] += 1
+                break
+    histogram_data = [
+        {'bucket': label, 'count': resolution_counts[label]}
+        for _, _, label in histogram_buckets
+    ]
+
+    context = {
+        'total_items': total_items,
+        'active_items': active_items,
+        'total_reports': total_reports,
+        'unresolved_reports': unresolved_reports,
+        'total_comments': total_comments,
+        'unread_messages': unread_messages,
+        'user_points': user_points,
+        'status_chart': status_chart,
+        'category_chart': category_chart,
+        'monthly_chart': monthly_chart,
+        'scatter_chart': scatter_chart,
+        'status_labels_map': status_labels_map,
+        'majority_timeline': majority_timeline,
+        'status_summary': status_summary,
+        'category_summary': category_summary,
+        'histogram_data': histogram_data,
+    }
+    return render(request, 'items/dashboard.html', context)
 
 
 def item_list(request):
